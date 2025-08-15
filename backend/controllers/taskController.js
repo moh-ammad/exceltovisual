@@ -150,7 +150,7 @@ const updateTask = async (req, res) => {
     return res.status(400).json({ message: "Task ID is required" });
   }
 
-  const allowedFields = ["title", "description","dueDate", "priority", "todoChecklist", "attachments"];
+  const allowedFields = ["title", "description", "dueDate", "priority", "todoChecklist", "attachments"];
   const updates = Object.fromEntries(
     Object.entries(req.body || {}).filter(([key]) => allowedFields.includes(key))
   );
@@ -170,7 +170,12 @@ const updateTask = async (req, res) => {
       return res.status(403).json({ message: "Access denied: Only admin or assigned users can update this task." });
     }
 
-    Object.assign(task, updates);
+    for (const key of allowedFields) {
+      if (updates[key] !== undefined) {
+        task[key] = updates[key];
+      }
+    }
+
 
     syncTaskStatusWithTodos(task);
 
@@ -220,7 +225,8 @@ const getDashboardData = async (req, res) => {
       {
         $match: {
           ...filter,
-          status: { $ne: 'completed' } // Exclude completed
+          status: { $ne: 'completed' },
+          dueDate: { $lt: new Date() }
         }
       },
       {

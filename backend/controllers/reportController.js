@@ -130,22 +130,24 @@ const importExcelTasks = async (req, res) => {
       return res.status(400).json({ message: "No Excel file uploaded." });
     }
 
-
     const filePath = req.file.path;
     const workbook = XLSX.readFile(filePath);
     const isAdmin = req.user.role.toLowerCase() === 'admin';
 
-    const usersSheet = isAdmin ? XLSX.utils.sheet_to_json(workbook.Sheets["Users"] || []) : [];
-    const tasksSheet = XLSX.utils.sheet_to_json(workbook.Sheets["Tasks"] || []);
+    const usersSheet = isAdmin ? XLSX.utils.sheet_to_json(workbook.Sheets["Users"] || {}) : [];
+    const tasksSheet = XLSX.utils.sheet_to_json(workbook.Sheets["Tasks"] || {});
 
     const errors = [];
     const userEmailToId = {};
 
+    // Step 1: Validate and map users (if admin)
     if (isAdmin) {
       for (let i = 0; i < usersSheet.length; i++) {
         const row = usersSheet[i];
         const rowNum = i + 2;
-        const { name, email, role } = row;
+        const name = row.name?.trim();
+        const email = row.email?.trim().toLowerCase();
+        const role = row.role?.trim().toLowerCase();
 
         if (!name || !email || !role) {
           errors.push(`Users sheet row ${rowNum}: Missing required fields.`);
@@ -168,36 +170,34 @@ const importExcelTasks = async (req, res) => {
       if (usersSheet.length > 0) {
         errors.push("You are not allowed to upload or import users.");
       }
-
-      userEmailToId[req.user.email] = req.user._id;
+      userEmailToId[req.user.email.toLowerCase()] = req.user._id;
     }
 
+    // Step 2: Process tasks
     for (let i = 0; i < tasksSheet.length; i++) {
       const row = tasksSheet[i];
       const rowNum = i + 2;
 
-      const {
-        title,
-        description,
-        priority = "medium",
-        status = "pending",
-        dueDate,
-        assignedToEmails,
-        progress = 0,
-        todoChecklist
-      } = row;
+      const title = row.title?.trim();
+      const description = row.description?.trim();
+      const priority = row.priority?.trim().toLowerCase() || 'medium';
+      const status = row.status?.trim().toLowerCase() || 'pending';
+      const dueDate = row.dueDate;
+      const assignedToEmails = row.assignedToEmails;
+      const progress = row.progress || 0;
+      const checklistRaw = row.todoChecklist;
 
       if (!title || !dueDate || !assignedToEmails) {
         errors.push(`Tasks sheet row ${rowNum}: Missing required fields.`);
         continue;
       }
 
-      if (!["low", "medium", "high"].includes(priority.toLowerCase())) {
+      if (!["low", "medium", "high"].includes(priority)) {
         errors.push(`Tasks sheet row ${rowNum}: Invalid priority "${priority}".`);
         continue;
       }
 
-      if (!["pending", "in-progress", "completed"].includes(status.toLowerCase())) {
+      if (!["pending", "in-progress", "completed"].includes(status)) {
         errors.push(`Tasks sheet row ${rowNum}: Invalid status "${status}".`);
         continue;
       }
@@ -208,7 +208,7 @@ const importExcelTasks = async (req, res) => {
         continue;
       }
 
-      const emailList = assignedToEmails.split(',').map(email => email.trim());
+      const emailList = assignedToEmails.split(',').map(email => email.trim().toLowerCase());
       const assignedToIds = [];
 
       for (const email of emailList) {
@@ -231,9 +231,9 @@ const importExcelTasks = async (req, res) => {
       }
 
       let todosArray = [];
-      if (todoChecklist) {
+      if (checklistRaw) {
         try {
-          todosArray = JSON.parse(todoChecklist);
+          todosArray = JSON.parse(checklistRaw);
           if (!Array.isArray(todosArray)) {
             errors.push(`Tasks sheet row ${rowNum}: TodoChecklist must be an array.`);
             continue;
@@ -261,19 +261,20 @@ const importExcelTasks = async (req, res) => {
       }
     }
 
+    // Step 3: Clean up uploaded file
     try {
-    console.log('✅ Uploaded file info:', req.file);
-
-      // fs.unlinkSync(filePath);
+      await fs.promises.unlink(filePath);
     } catch (err) {
       console.warn("Failed to delete uploaded file:", err.message);
     }
 
+    // Final response
     if (errors.length > 0) {
       return res.status(400).json({ message: "Excel processed with errors.", errors });
     }
 
     return res.status(200).json({ message: "Excel imported successfully." });
+
   } catch (err) {
     console.error("Excel import error:", err);
     return res.status(500).json({

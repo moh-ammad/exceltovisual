@@ -1,45 +1,78 @@
 import {
   BrowserRouter as Router,
   Routes,
-  Route
-} from 'react-router-dom'
-import Login from './pages/Auth/Login'
-import SignUp from './pages/Auth/SignUp'
-import ManageUsers from './pages/Admin/ManageUsers'
-import ManageTasks from './pages/Admin/ManageTasks'
-import CreateTask from './pages/Admin/CreateTask'
-import Dashboard from './pages/Admin/Dashboard'
-import UserDashboard from './pages/users/UserDashboard'
-import MyTasks from './pages/users/MyTasks'
-import PrivateRoute from './routes/PrivateRoute'
-import ViewTaskDetails from './pages/users/ViewtaskDetails'
+  Route,
+} from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
+
+import UserContextProvider from './context/userContext';
+import ThemeProvider from './context/themeContext';
+
+import Login from './pages/Auth/Login';
+import SignUp from './pages/Auth/SignUp';
+
+import ManageUsers from './pages/Admin/ManageUsers';
+import ManageTasks from './pages/Admin/ManageTasks';
+import CreateTask from './pages/Admin/CreateTask';
+import Dashboard from './pages/Admin/Dashboard';
+
+import UserDashboard from './pages/users/UserDashboard';
+import MyTasks from './pages/users/MyTasks';
+import ViewTaskDetails from './pages/users/ViewtaskDetails';
+
+
+import PrivateRoute from './routes/PrivateRoute';
+
+import Navbar from './components/layouts/Navbar';
+import Home from './components/layouts/Home';
+import Instructions from './components/Instructions';
+import UploadPage from './components/UploadFile';
+import Visualize2D from './components/Visualize2D';
+import Visualize3D from './components/Visualize3D';
+import Profile from './components/Profile';
+
 const App = () => {
-  
   return (
-    <div>
-      <Router>
-        <Routes>
-          {/* Auth routes */}
-          <Route path="/login" element={<Login/>} />
-          <Route path="/signUp" element={<SignUp/>} />
-          {/* Admin routes */}
-          <Route element={<PrivateRoute allowedRoles={['admin']}/>} >
-          <Route path="/admin/dashboard" element={<Dashboard/>} />
-          <Route path="/admin/create-task" element={<CreateTask/>} />
-          <Route path="/admin/tasks" element={<ManageTasks/>} />
-          <Route path="/admin/users" element={<ManageUsers/>} />
-          </Route>
-          {/* user routes */}
-          <Route element={<PrivateRoute allowedRoles={['admin','user']}/>} >
-          <Route path="/user/user-dashboard" element={<UserDashboard/>} />
-          <Route path="/user/tasks" element={<MyTasks/>} />
-          <Route path="/user/view-task/:taskId" element={<ViewTaskDetails/>} />
-          </Route>
+    <UserContextProvider>
+      <ThemeProvider>
+        <Router>
+          <Toaster position="top-right" reverseOrder={false} />
 
-        </Routes>
-      </Router>
-    </div>
-  )
-}
+          <Routes>
+            {/* Public routes without Navbar */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/signUp" element={<SignUp />} />
 
-export default App
+            {/* Protected routes wrapped by Navbar */}
+            <Route element={<PrivateRoute allowedRoles={['admin', 'member']} />}>
+              <Route element={<Navbar />}>
+                {/* Common routes */}
+                <Route path="/" element={<Home />} />
+                <Route path="/profile" element={<Profile />} />
+                <Route path="/upload" element={<UploadPage />} />
+                <Route path="/instructions" element={<Instructions />} />
+                <Route path="/visualize/2d" element={<Visualize2D />} />
+                <Route path="/visualize/3d" element={<Visualize3D />} />
+
+                {/* User routes */}
+                <Route path="/tasks" element={<MyTasks />} />
+                <Route path="/view-task/:taskId" element={<ViewTaskDetails />} />
+                <Route path="/user-dashboard" element={<UserDashboard />} />
+
+                {/* Admin-only routes */}
+                <Route element={<PrivateRoute allowedRoles={['admin']} />}>
+                  <Route path="/admin/dashboard" element={<Dashboard />} />
+                  <Route path="/admin/create-task" element={<CreateTask />} />
+                  <Route path="/admin/tasks" element={<ManageTasks />} />
+                  <Route path="/admin/users" element={<ManageUsers />} />
+                </Route>
+              </Route>
+            </Route>
+          </Routes>
+        </Router>
+      </ThemeProvider>
+    </UserContextProvider>
+  );
+};
+
+export default App;
