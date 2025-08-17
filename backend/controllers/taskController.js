@@ -14,7 +14,6 @@ const getAllTasks = async (req, res) => {
 
     let tasks = await Task.find(taskFilter).populate('assignedTo', 'name email profileImageUrl');
 
-
     tasks = tasks.map(task => {
       const completedCount = task.todoChecklist.filter(todo => todo.completed).length;
       return {
@@ -51,9 +50,6 @@ const getAllTasks = async (req, res) => {
   }
 };
 
-
-
-
 const getTaskById = async (req, res) => {
   const { id } = req.params;
   try {
@@ -82,35 +78,32 @@ const getTaskById = async (req, res) => {
   }
 };
 
-
-
-
 const createTask = async (req, res) => {
   try {
     const {
       title,
       description,
       priority,
-      status,
       dueDate,
       assignedTo,
-      attachments,
-      todoChecklist,
-      progress,
+      attachments = [],
+      todoChecklist = [],
     } = req.body;
+
+    if (!title || !description || !priority || !dueDate || !Array.isArray(assignedTo) || assignedTo.length === 0) {
+      return res.status(400).json({ message: "Missing required fields or 'assignedTo' must be a non-empty array" });
+    }
+
     const existingTask = await Task.findOne({
       title,
       dueDate,
-      createdBy: req.user._id
+      createdBy: req.user._id,
     });
+
     if (existingTask) {
-      return res.status(409).json({ message: "Task with same title and due date already exists" });
+      return res.status(409).json({ message: "Task with the same title and due date already exists" });
     }
 
-
-    if (!Array.isArray(assignedTo)) {
-      return res.status(400).json({ message: "assignedTo must be an array" });
-    }
     for (const userId of assignedTo) {
       if (!mongoose.Types.ObjectId.isValid(userId)) {
         return res.status(400).json({ message: `Invalid user ID: ${userId}` });
@@ -121,27 +114,36 @@ const createTask = async (req, res) => {
       }
     }
 
+    if (!Array.isArray(attachments)) {
+      return res.status(400).json({ message: "Attachments must be an array." });
+    }
 
-    const newTask = await Task.create({
+    for (const att of attachments) {
+      if (typeof att !== 'object' || !att.name || !att.url) {
+        return res.status(400).json({ message: "Each attachment must have a name and url." });
+      }
+    }
+
+    const newTask = new Task({
       title,
       description,
       priority,
-      status,
       dueDate,
       assignedTo,
       createdBy: req.user._id,
       attachments,
       todoChecklist,
-      progress,
     });
+
+    syncTaskStatusWithTodos(newTask);
+    await newTask.save();
 
     res.status(201).json(newTask);
   } catch (error) {
-    res.status(400).json({ message: "Invalid Task Data", error: error.message });
+    console.error("Error creating task:", error);
+    res.status(500).json({ message: "Failed to create task", error: error.message });
   }
 };
-
-
 
 const updateTask = async (req, res) => {
   const { id } = req.params;
@@ -150,11 +152,6 @@ const updateTask = async (req, res) => {
     return res.status(400).json({ message: "Task ID is required" });
   }
 
-  const allowedFields = ["title", "description", "dueDate", "priority", "todoChecklist", "attachments"];
-  const updates = Object.fromEntries(
-    Object.entries(req.body || {}).filter(([key]) => allowedFields.includes(key))
-  );
-
   try {
     const task = await Task.findById(id).populate('assignedTo', 'name email profileImageUrl');
     if (!task) {
@@ -162,27 +159,76 @@ const updateTask = async (req, res) => {
     }
 
     const isAdmin = req.user.role === 'admin';
-    const isAssignedUser = task.assignedTo.some(
-      userId => userId.toString() === req.user._id.toString()
-    );
+    const assignedUsers = Array.isArray(task.assignedTo) ? task.assignedTo : [task.assignedTo];
+    const isAssignedUser = assignedUsers.some(user => user._id.toString() === req.user._id.toString());
 
     if (!isAdmin && !isAssignedUser) {
       return res.status(403).json({ message: "Access denied: Only admin or assigned users can update this task." });
     }
 
-    for (const key of allowedFields) {
-      if (updates[key] !== undefined) {
-        task[key] = updates[key];
+    const updates = Object.fromEntries(
+      Object.entries(req.body || {}).filter(([key]) =>
+        isAdmin
+          ? ["title", "description", "dueDate", "priority", "todoChecklist", "attachments"].includes(key)
+          : ["todoChecklist"].includes(key)
+      )
+    );
+
+    if (updates.dueDate) {
+      const dateObj = new Date(updates.dueDate);
+      if (!isNaN(dateObj.getTime())) {
+        task.dueDate = dateObj;
+      } else {
+        return res.status(400).json({ message: "Invalid dueDate format" });
       }
     }
 
+    if (updates.todoChecklist) {
+      if (!Array.isArray(updates.todoChecklist)) {
+        return res.status(400).json({ message: "todoChecklist should be an array" });
+      }
+
+      task.todoChecklist = updates.todoChecklist.map(todo => {
+        let normalizedTodo = { ...todo };
+        if (todo.dueDate) {
+          const todoDate = new Date(todo.dueDate);
+          if (isNaN(todoDate.getTime())) {
+            throw new Error("Invalid todo dueDate format");
+          }
+          normalizedTodo.dueDate = todoDate;
+        }
+        return normalizedTodo;
+      });
+    }
+
+    if (isAdmin) {
+      ["title", "description", "priority"].forEach(field => {
+        if (updates[field] !== undefined) {
+          task[field] = updates[field];
+        }
+      });
+
+      if (updates.attachments !== undefined) {
+        if (!Array.isArray(updates.attachments)) {
+          return res.status(400).json({ message: "Attachments must be an array." });
+        }
+
+        for (const att of updates.attachments) {
+          if (typeof att !== 'object' || !att.name || !att.url) {
+            return res.status(400).json({ message: "Each attachment must have a name and url." });
+          }
+        }
+
+        task.attachments = updates.attachments;
+      }
+    }
 
     syncTaskStatusWithTodos(task);
-
     await task.save();
 
     res.status(200).json(task);
   } catch (error) {
+    console.error("Error updating task:", error);
     res.status(500).json({
       message: "Error updating task",
       error: error.message
@@ -190,13 +236,9 @@ const updateTask = async (req, res) => {
   }
 };
 
-
-
-
 const deleteTask = async (req, res) => {
   const { id } = req.params;
 
-  // Check if user is admin
   if (req.user.role !== 'admin') {
     return res.status(403).json({ message: "Only admin can delete tasks" });
   }
@@ -215,12 +257,10 @@ const deleteTask = async (req, res) => {
   }
 };
 
-
 const getDashboardData = async (req, res) => {
   try {
     const filter = req.user.role === 'admin' ? {} : { assignedTo: req.user._id };
 
-    // 📊 Group by Status (excluding 'completed')
     const tasksByStatus = await Task.aggregate([
       {
         $match: {
@@ -237,7 +277,6 @@ const getDashboardData = async (req, res) => {
       }
     ]);
 
-    // 🚦 Group by Priority
     const tasksByPriority = await Task.aggregate([
       { $match: filter },
       {
@@ -248,7 +287,6 @@ const getDashboardData = async (req, res) => {
       }
     ]);
 
-    // 🕒 Recent Tasks
     const recentTasks = await Task.find(filter)
       .sort({ createdAt: -1 })
       .limit(5)
@@ -267,12 +305,9 @@ const getDashboardData = async (req, res) => {
   }
 };
 
-
-
-
 const updateTaskStatus = async (req, res) => {
   const { id } = req.params;
-  const { todoChecklist } = req.body; // e.g. updated todos
+  const { todoChecklist } = req.body;
 
   try {
     const task = await Task.findById(id);
@@ -294,7 +329,6 @@ const updateTaskStatus = async (req, res) => {
     }
 
     syncTaskStatusWithTodos(task);
-
     await task.save();
 
     res.status(200).json(task);
@@ -305,8 +339,6 @@ const updateTaskStatus = async (req, res) => {
     });
   }
 };
-
-
 
 const updateTaskChecklist = async (req, res) => {
   const { id } = req.params;
@@ -331,12 +363,7 @@ const updateTaskChecklist = async (req, res) => {
       return res.status(403).json({ message: "Access denied: Only admin or assigned users can update this task." });
     }
 
-    // Append new todos
     task.todoChecklist = [...task.todoChecklist, ...checklist];
-
-    // Optional: sync status/progress if you have such a function
-    // syncTaskStatusWithTodos(task);
-
     await task.save();
 
     res.status(200).json(task);
@@ -347,8 +374,6 @@ const updateTaskChecklist = async (req, res) => {
     });
   }
 };
-
-
 
 export {
   getAllTasks,

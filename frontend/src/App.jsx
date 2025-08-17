@@ -20,7 +20,6 @@ import UserDashboard from './pages/users/UserDashboard';
 import MyTasks from './pages/users/MyTasks';
 import ViewTaskDetails from './pages/users/ViewtaskDetails';
 
-
 import PrivateRoute from './routes/PrivateRoute';
 
 import Navbar from './components/layouts/Navbar';
@@ -31,6 +30,7 @@ import Visualize2D from './components/Visualize2D';
 import Visualize3D from './components/Visualize3D';
 import Profile from './components/Profile';
 import UpdateUser from './pages/Auth/UpdateUser';
+import UpdateTask from './pages/Admin/UpdateTask';
 
 const App = () => {
   return (
@@ -51,10 +51,15 @@ const App = () => {
                 <Route path="/" element={<Home />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/update-profile" element={<UpdateUser />} />
+                <Route path="/admin/update-user/:userId" element={<UpdateUser />} />
+
                 <Route path="/upload" element={<UploadPage />} />
                 <Route path="/instructions" element={<Instructions />} />
                 <Route path="/visualize/2d" element={<Visualize2D />} />
                 <Route path="/visualize/3d" element={<Visualize3D />} />
+
+                {/* ✅ Fixed this line */}
+                <Route path="/update-task/:taskId" element={<UpdateTask />} />
 
                 {/* User routes */}
                 <Route path="/tasks" element={<MyTasks />} />

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { Input, Select } from "@/components/layouts/inputs/Input";
 import ProfilePhotoSelector from "@/components/layouts/inputs/ProfilePhotoSelector";
 import {
@@ -7,11 +8,11 @@ import {
   showError,
   showSuccess,
 } from "@/utils/helper";
-import axiosInstance from "@/utils/axiosinstance";
+import axiosInstance from "@/utils/axiosInstance";
 import { API_ENDPOINTS } from "@/utils/apisPaths";
-import { useNavigate } from "react-router-dom";
 
 const UpdateUser = () => {
+  const { userId } = useParams(); // get userId if admin editing other user
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -19,18 +20,28 @@ const UpdateUser = () => {
     role: "member",
     adminKey: "",
   });
-
   const [profilePic, setProfilePic] = useState(null);
   const [existingImageUrl, setExistingImageUrl] = useState(null);
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  // Fetch user profile on mount
+  const isAdminEditing = Boolean(userId);
+
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const { data } = await axiosInstance.get(API_ENDPOINTS.AUTH.GET_PROFILE);
+        let data;
+        if (isAdminEditing) {
+          // Admin editing user: fetch user by id
+          const res = await axiosInstance.get(API_ENDPOINTS.USERS.GET_USER_BY_ID(userId));
+          data = res.data;
+        } else {
+          // User updating self: fetch own profile
+          const res = await axiosInstance.get(API_ENDPOINTS.AUTH.GET_PROFILE);
+          data = res.data;
+        }
+
         setFormData({
           fullName: data.name || "",
           email: data.email || "",
@@ -44,7 +55,7 @@ const UpdateUser = () => {
       }
     };
     fetchProfile();
-  }, []);
+  }, [userId, isAdminEditing]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -54,12 +65,13 @@ const UpdateUser = () => {
   const validateForm = () => {
     const newErrors = {};
     if (!formData.fullName.trim()) newErrors.fullName = "Full name is required.";
-    if (!validateEmail(formData.email)) newErrors.email = "Invalid email.";
+    if (!validateEmail(formData.email)) newErrors.email = "Invalid email address.";
     if (formData.password && !validatePassword(formData.password)) {
       newErrors.password = "Password must be at least 6 characters.";
     }
-    if (!formData.role) newErrors.role = "Role is required.";
-    if (formData.role === "admin" && !formData.adminKey.trim()) {
+    // Only require adminKey if role is admin and current user is updating self
+    // If admin is editing another user, no need to enter adminKey here
+    if (!isAdminEditing && formData.role === "admin" && !formData.adminKey.trim()) {
       newErrors.adminKey = "Admin key is required.";
     }
     setErrors(newErrors);
@@ -77,40 +89,45 @@ const UpdateUser = () => {
       formDataToSend.append("email", formData.email);
       if (formData.password) formDataToSend.append("password", formData.password);
       formDataToSend.append("role", formData.role);
-      if (formData.role === "admin") {
+
+      // Only append adminKey if user updating own profile
+      if (!isAdminEditing && formData.role === "admin") {
         formDataToSend.append("adminKey", formData.adminKey);
       }
-      if (profilePic) {
-        formDataToSend.append("image", profilePic);
-      } else if (existingImageUrl === null) {
-        // User cleared existing image
-        formDataToSend.append("image", "");
+
+      if (profilePic) formDataToSend.append("image", profilePic);
+      else if (existingImageUrl === null) formDataToSend.append("image", "");
+
+      if (isAdminEditing) {
+        // Admin updating another user
+        await axiosInstance.put(API_ENDPOINTS.USERS.UPDATE_USER(userId), formDataToSend, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+        showSuccess("User updated successfully!");
+        navigate("/admin/users");
+      } else {
+        // User updating self
+        await axiosInstance.put(API_ENDPOINTS.AUTH.UPDATE_PROFILE, formDataToSend, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+        showSuccess("Profile updated successfully!");
+        navigate("/profile");
       }
-
-      await axiosInstance.put(API_ENDPOINTS.AUTH.UPDATE_PROFILE, formDataToSend, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-
-      showSuccess("Profile updated successfully!");
-      navigate("/profile");
-    } catch (error) {
-      showError(error.response?.data?.message || "Update failed");
+    } catch (err) {
+      showError(err?.response?.data?.message || "Update failed");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="max-w-3xl w-full mx-auto bg-white dark:bg-gray-900 p-10 rounded-xl shadow-xl">
-      <h2 className="text-3xl font-extrabold mb-3 text-gray-900 dark:text-white">
-        Update Your Profile
+    <div className="max-w-3xl mx-auto p-8 bg-white dark:bg-gray-900 shadow-lg rounded-xl">
+      <h2 className="text-2xl font-bold mb-6 dark:text-white">
+        {isAdminEditing ? "Update User Profile" : "Update Your Profile"}
       </h2>
-      <p className="text-base text-gray-600 dark:text-gray-300 mb-8">
-        Edit your account details below
-      </p>
 
       <form onSubmit={handleUpdate} encType="multipart/form-data" noValidate>
-        <div className="flex justify-center mb-10">
+        <div className="flex justify-center mb-6">
           <ProfilePhotoSelector
             profilePic={profilePic}
             setProfilePic={setProfilePic}
@@ -119,75 +136,54 @@ const UpdateUser = () => {
           />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div>
-            <Input
-              label="Full Name"
-              name="fullName"
-              type="text"
-              value={formData.fullName}
-              onChange={handleChange}
-              placeholder="Enter your full name"
-              className="mb-1"
-              error={errors.fullName}
-            />
-          </div>
-
-          <div>
-            <Input
-              label="Email"
-              name="email"
-              type="email"
-              value={formData.email}
-              onChange={handleChange}
-              placeholder="Enter your email"
-              className="mb-1"
-              error={errors.email}
-            />
-          </div>
-
-          <div>
-            <Input
-              label="New Password (optional)"
-              name="password"
-              type="password"
-              value={formData.password}
-              onChange={handleChange}
-              placeholder="Enter a new password if changing"
-              className="mb-1"
-              error={errors.password}
-            />
-          </div>
-
-          <div>
-            <Select
-              label="Role"
-              name="role"
-              value={formData.role}
-              onChange={handleChange}
-              options={[
-                { value: "member", label: "Member" },
-                { value: "admin", label: "Admin" },
-              ]}
-              className="mb-1"
-              error={errors.role}
-            />
-          </div>
-
-          {formData.role === "admin" && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Input
+            label="Full Name"
+            name="fullName"
+            value={formData.fullName}
+            onChange={handleChange}
+            error={errors.fullName}
+          />
+          <Input
+            label="Email"
+            name="email"
+            type="email"
+            value={formData.email}
+            onChange={handleChange}
+            error={errors.email}
+          />
+          <Input
+            label="New Password"
+            name="password"
+            type="password"
+            value={formData.password}
+            onChange={handleChange}
+            placeholder="Leave empty to keep current password"
+            error={errors.password}
+          />
+          <Select
+            label="Role"
+            name="role"
+            value={formData.role}
+            onChange={handleChange}
+            options={[
+              { value: "member", label: "Member" },
+              { value: "admin", label: "Admin" },
+            ]}
+            error={errors.role}
+            disabled={!isAdminEditing} // Only admin can change role when editing other users
+          />
+          {/* Show adminKey only if user updating self and role=admin */}
+          {!isAdminEditing && formData.role === "admin" && (
             <div className="md:col-span-2">
               <Input
                 label="Admin Key"
                 name="adminKey"
                 type="password"
-                autoComplete="off" // <-- change here to better prevent autofill
                 value={formData.adminKey}
                 onChange={handleChange}
-                placeholder="Enter admin key to verify"
-                className="mb-1"
                 error={errors.adminKey}
               />
-
             </div>
           )}
         </div>
@@ -195,9 +191,9 @@ const UpdateUser = () => {
         <button
           type="submit"
           disabled={loading}
-          className="btn-primary mt-10 w-full disabled:opacity-50"
+          className="btn-primary w-full mt-8 disabled:opacity-50"
         >
-          {loading ? "Updating profile..." : "Update Profile"}
+          {loading ? (isAdminEditing ? "Updating User..." : "Updating...") : (isAdminEditing ? "Update User" : "Update Profile")}
         </button>
       </form>
     </div>

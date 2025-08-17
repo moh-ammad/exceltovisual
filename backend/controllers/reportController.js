@@ -3,7 +3,6 @@ import XLSX from 'xlsx';
 import Task from '../models/task.js';
 import User from '../models/user.js';
 
-
 /**
  * Utility: Generate Excel file from JSON data and send as response
  */
@@ -27,7 +26,7 @@ const generateAndSendExcel = (res, data, sheetName, filename) => {
 };
 
 /**
- * Format user data
+ * Format user data for Excel export
  */
 const formatUsers = (users) => {
   return users.map(user => ({
@@ -36,13 +35,13 @@ const formatUsers = (users) => {
     Email: user.email,
     Role: user.role,
     ProfileImage: user.profileImageUrl || 'N/A',
-    CreatedAt: user.createdAt,
-    UpdatedAt: user.updatedAt
+    CreatedAt: user.createdAt ? user.createdAt.toISOString() : '',
+    UpdatedAt: user.updatedAt ? user.updatedAt.toISOString() : '',
   }));
 };
 
 /**
- * Format task data with todoChecklist as JSON string
+ * Format task data for Excel export
  */
 const formatTasks = (tasks) => {
   return tasks.map(task => ({
@@ -51,21 +50,21 @@ const formatTasks = (tasks) => {
     Description: task.description || 'N/A',
     Priority: task.priority,
     Status: task.status,
-    DueDate: task.dueDate,
+    DueDate: task.dueDate ? task.dueDate.toISOString() : '',
     Progress: task.progress,
     CreatedBy: task.createdBy?.name || 'Unknown',
     CreatedByEmail: task.createdBy?.email || 'Unknown',
-    AssignedTo: Array.isArray(task.assignedTo) && task.assignedTo.length > 0
+    AssignedToEmails: Array.isArray(task.assignedTo) && task.assignedTo.length > 0
       ? task.assignedTo.map(u => u.email).join(', ')
       : 'Unassigned',
     TodoChecklist: JSON.stringify(task.todoChecklist || []),
-    CreatedAt: task.createdAt,
-    UpdatedAt: task.updatedAt
+    CreatedAt: task.createdAt ? task.createdAt.toISOString() : '',
+    UpdatedAt: task.updatedAt ? task.updatedAt.toISOString() : '',
   }));
 };
 
 /**
- * Controller: Admin exports all users
+ * Controller: Export all users as XLSX
  */
 const exportUserReport = async (req, res) => {
   try {
@@ -82,7 +81,7 @@ const exportUserReport = async (req, res) => {
 };
 
 /**
- * Controller: Admin exports all tasks
+ * Controller: Export all tasks as XLSX
  */
 const exportTaskReport = async (req, res) => {
   try {
@@ -103,92 +102,174 @@ const exportTaskReport = async (req, res) => {
 };
 
 /**
- * Controller: User exports only their own created tasks
+ * Controller: Export both users and tasks in one XLSX file with two sheets
  */
-const exportMyTasks = async (req, res) => {
+const exportUsersAndTasksReport = async (req, res) => {
   try {
-    const userId = req.user._id;
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ message: "Access denied: Admins only." });
+    }
 
-    const tasks = await Task.find({ createdBy: userId })
+    const users = await User.find().select('-password -__v').lean();
+    const tasks = await Task.find()
       .populate('assignedTo', 'name email')
       .populate('createdBy', 'name email')
       .lean();
 
+    const formattedUsers = formatUsers(users);
     const formattedTasks = formatTasks(tasks);
 
-    generateAndSendExcel(res, formattedTasks, 'My Tasks', 'my-tasks.xlsx');
+    const workbook = XLSX.utils.book_new();
+    const wsUsers = XLSX.utils.json_to_sheet(formattedUsers);
+    const wsTasks = XLSX.utils.json_to_sheet(formattedTasks);
+
+    XLSX.utils.book_append_sheet(workbook, wsUsers, 'Users');
+    XLSX.utils.book_append_sheet(workbook, wsTasks, 'Tasks');
+
+    const excelBinary = XLSX.write(workbook, { bookType: 'xlsx', type: 'binary' });
+    const buffer = Buffer.from(excelBinary, 'binary');
+
+    res.setHeader('Content-Disposition', 'attachment; filename="users-tasks-report.xlsx"');
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.end(buffer);
+
   } catch (err) {
-    console.error('Error exporting user tasks:', err);
-    res.status(500).json({ message: 'Failed to export your tasks' });
+    console.error('Error exporting users and tasks:', err);
+    res.status(500).json({ message: 'Failed to export users and tasks' });
   }
 };
 
+/**
+ * Controller: Export empty XLSX template with headers only
+ */
+const exportEmptyTemplate = (req, res) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ message: "Access denied: Admins only." });
+  }
 
-const importExcelTasks = async (req, res) => {
+  const emptyUsersHeaders = [
+    { ID: '', Name: '', Email: '', Role: '', ProfileImage: '', CreatedAt: '', UpdatedAt: '' }
+  ];
+
+  const emptyTasksHeaders = [
+    {
+      ID: '',
+      Title: '',
+      Description: '',
+      Priority: '',
+      Status: '',
+      DueDate: '',
+      Progress: '',
+      CreatedBy: '',
+      CreatedByEmail: '',
+      AssignedToEmails: '',
+      TodoChecklist: '',
+      CreatedAt: '',
+      UpdatedAt: '',
+    }
+  ];
+
+  const workbook = XLSX.utils.book_new();
+  const wsUsers = XLSX.utils.json_to_sheet(emptyUsersHeaders);
+  const wsTasks = XLSX.utils.json_to_sheet(emptyTasksHeaders);
+
+  XLSX.utils.book_append_sheet(workbook, wsUsers, 'Users');
+  XLSX.utils.book_append_sheet(workbook, wsTasks, 'Tasks');
+
+  const excelBinary = XLSX.write(workbook, { bookType: 'xlsx', type: 'binary' });
+  const buffer = Buffer.from(excelBinary, 'binary');
+
+  res.setHeader('Content-Disposition', 'attachment; filename="empty-template.xlsx"');
+  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  res.end(buffer);
+};
+
+/**
+ * Controller: Import users and tasks from XLSX (Admin only)
+ */
+const importUsersAndTasks = async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ message: "No Excel file uploaded." });
     }
 
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ message: "Only admins can import users and tasks." });
+    }
+
     const filePath = req.file.path;
     const workbook = XLSX.readFile(filePath);
-    const isAdmin = req.user.role.toLowerCase() === 'admin';
 
-    const usersSheet = isAdmin ? XLSX.utils.sheet_to_json(workbook.Sheets["Users"] || {}) : [];
+    const usersSheet = XLSX.utils.sheet_to_json(workbook.Sheets["Users"] || {});
     const tasksSheet = XLSX.utils.sheet_to_json(workbook.Sheets["Tasks"] || {});
 
     const errors = [];
-    const userEmailToId = {};
 
-    // Step 1: Validate and map users (if admin)
-    if (isAdmin) {
-      for (let i = 0; i < usersSheet.length; i++) {
-        const row = usersSheet[i];
-        const rowNum = i + 2;
-        const name = row.name?.trim();
-        const email = row.email?.trim().toLowerCase();
-        const role = row.role?.trim().toLowerCase();
+    // 1) Process Users sheet: create or update users
+    for (let i = 0; i < usersSheet.length; i++) {
+      const row = usersSheet[i];
+      const rowNum = i + 2;
 
-        if (!name || !email || !role) {
-          errors.push(`Users sheet row ${rowNum}: Missing required fields.`);
-          continue;
-        }
+      const name = row.Name?.trim();
+      const email = row.Email?.trim().toLowerCase();
+      const role = row.Role?.trim().toLowerCase();
 
-        if (!["admin", "member"].includes(role)) {
-          errors.push(`Users sheet row ${rowNum}: Invalid role "${role}".`);
-          continue;
-        }
+      if (!name || !email || !role) {
+        errors.push(`Users sheet row ${rowNum}: Missing required fields.`);
+        continue;
+      }
 
-        const existingUser = await User.findOne({ email });
-        if (!existingUser) {
-          errors.push(`Users sheet row ${rowNum}: User "${email}" not found. Register them first.`);
+      if (!["admin", "member"].includes(role)) {
+        errors.push(`Users sheet row ${rowNum}: Invalid role "${role}".`);
+        continue;
+      }
+
+      try {
+        let user = await User.findOne({ email });
+        if (user) {
+          // Update user data except password
+          user.name = name;
+          user.role = role;
+          await user.save();
         } else {
-          userEmailToId[email] = existingUser._id;
+          // Create new user with a temporary password (you should handle password reset flow)
+          user = new User({
+            name,
+            email,
+            role,
+            password: 'changeme123', // Change or notify user to reset later
+          });
+          await user.save();
         }
+      } catch (err) {
+        errors.push(`Users sheet row ${rowNum}: Failed to create/update user - ${err.message}`);
       }
-    } else {
-      if (usersSheet.length > 0) {
-        errors.push("You are not allowed to upload or import users.");
-      }
-      userEmailToId[req.user.email.toLowerCase()] = req.user._id;
     }
 
-    // Step 2: Process tasks
+    // 2) Build email to userId map after updates
+    const usersInDB = await User.find().select('_id email').lean();
+    const userEmailToId = {};
+    usersInDB.forEach(u => {
+      userEmailToId[u.email.toLowerCase()] = u._id;
+    });
+
+    // 3) Process Tasks sheet
     for (let i = 0; i < tasksSheet.length; i++) {
       const row = tasksSheet[i];
       const rowNum = i + 2;
 
-      const title = row.title?.trim();
-      const description = row.description?.trim();
-      const priority = row.priority?.trim().toLowerCase() || 'medium';
-      const status = row.status?.trim().toLowerCase() || 'pending';
-      const dueDate = row.dueDate;
-      const assignedToEmails = row.assignedToEmails;
-      const progress = row.progress || 0;
-      const checklistRaw = row.todoChecklist;
+      const title = row.Title?.trim();
+      const description = row.Description?.trim() || '';
+      const priority = (row.Priority?.trim().toLowerCase()) || 'medium';
+      const status = (row.Status?.trim().toLowerCase()) || 'pending';
+      const dueDateRaw = row.DueDate;
+      const progress = Number(row.Progress) || 0;
+      const createdByEmail = row.CreatedByEmail?.trim().toLowerCase();
+      const assignedToEmailsRaw = row.AssignedToEmails || '';
+      const todoChecklistRaw = row.TodoChecklist || '';
 
-      if (!title || !dueDate || !assignedToEmails) {
-        errors.push(`Tasks sheet row ${rowNum}: Missing required fields.`);
+      if (!title || !dueDateRaw || !assignedToEmailsRaw) {
+        errors.push(`Tasks sheet row ${rowNum}: Missing required fields (Title, DueDate, AssignedToEmails).`);
         continue;
       }
 
@@ -202,16 +283,21 @@ const importExcelTasks = async (req, res) => {
         continue;
       }
 
-      const parsedDueDate = new Date(dueDate);
+      const parsedDueDate = new Date(dueDateRaw);
       if (isNaN(parsedDueDate)) {
-        errors.push(`Tasks sheet row ${rowNum}: Invalid dueDate.`);
+        errors.push(`Tasks sheet row ${rowNum}: Invalid DueDate.`);
         continue;
       }
 
-      const emailList = assignedToEmails.split(',').map(email => email.trim().toLowerCase());
+      let createdById = userEmailToId[createdByEmail];
+      if (!createdById) {
+        createdById = req.user._id; // fallback to importer user
+      }
+
+      const assignedEmails = assignedToEmailsRaw.split(',').map(e => e.trim().toLowerCase()).filter(e => e);
       const assignedToIds = [];
 
-      for (const email of emailList) {
+      for (const email of assignedEmails) {
         const userId = userEmailToId[email];
         if (!userId) {
           errors.push(`Tasks sheet row ${rowNum}: Assigned user "${email}" not found.`);
@@ -221,24 +307,19 @@ const importExcelTasks = async (req, res) => {
       }
 
       if (assignedToIds.length === 0) {
-        errors.push(`Tasks sheet row ${rowNum}: No valid users found for assignment.`);
-        continue;
-      }
-
-      if (!isAdmin && !assignedToIds.includes(req.user._id)) {
-        errors.push(`Tasks sheet row ${rowNum}: You can only assign tasks to yourself.`);
+        errors.push(`Tasks sheet row ${rowNum}: No valid assigned users found.`);
         continue;
       }
 
       let todosArray = [];
-      if (checklistRaw) {
+      if (todoChecklistRaw) {
         try {
-          todosArray = JSON.parse(checklistRaw);
+          todosArray = JSON.parse(todoChecklistRaw);
           if (!Array.isArray(todosArray)) {
-            errors.push(`Tasks sheet row ${rowNum}: TodoChecklist must be an array.`);
+            errors.push(`Tasks sheet row ${rowNum}: TodoChecklist must be a JSON array.`);
             continue;
           }
-        } catch (err) {
+        } catch {
           errors.push(`Tasks sheet row ${rowNum}: Invalid TodoChecklist JSON.`);
           continue;
         }
@@ -251,9 +332,9 @@ const importExcelTasks = async (req, res) => {
           priority,
           status,
           dueDate: parsedDueDate,
-          assignedTo: assignedToIds,
-          createdBy: req.user._id,
           progress,
+          createdBy: createdById,
+          assignedTo: assignedToIds,
           todoChecklist: todosArray
         });
       } catch (err) {
@@ -261,35 +342,29 @@ const importExcelTasks = async (req, res) => {
       }
     }
 
-    // Step 3: Clean up uploaded file
+    // Delete uploaded file after processing
     try {
       await fs.promises.unlink(filePath);
     } catch (err) {
       console.warn("Failed to delete uploaded file:", err.message);
     }
 
-    // Final response
     if (errors.length > 0) {
-      return res.status(400).json({ message: "Excel processed with errors.", errors });
+      return res.status(400).json({ message: "Import completed with errors.", errors });
     }
 
-    return res.status(200).json({ message: "Excel imported successfully." });
+    return res.status(200).json({ message: "Users and tasks imported successfully." });
 
   } catch (err) {
-    console.error("Excel import error:", err);
-    return res.status(500).json({
-      message: "Internal server error during Excel import.",
-      error: err.message
-    });
+    console.error("Error importing users and tasks:", err);
+    return res.status(500).json({ message: "Server error during import.", error: err.message });
   }
 };
-
-
-
 
 export {
   exportUserReport,
   exportTaskReport,
-  exportMyTasks,
-  importExcelTasks
+  exportUsersAndTasksReport,
+  exportEmptyTemplate,
+  importUsersAndTasks
 };

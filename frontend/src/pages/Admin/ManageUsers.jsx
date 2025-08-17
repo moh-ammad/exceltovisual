@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axiosInstance from '../../utils/axiosInstance';
 import { API_ENDPOINTS } from '../../utils/apisPaths';
 import toast from 'react-hot-toast';
@@ -9,6 +10,7 @@ const ManageUsers = () => {
   const [users, setUsers] = useState([]);
   const [deleteUserId, setDeleteUserId] = useState(null);
   const [deleting, setDeleting] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -19,7 +21,6 @@ const ManageUsers = () => {
         toast.error('Failed to load users');
       }
     };
-
     fetchUsers();
   }, []);
 
@@ -43,7 +44,8 @@ const ManageUsers = () => {
   };
 
   const handleEdit = (user) => {
-    toast('Edit functionality not yet implemented');
+    // Navigate to admin user edit page with userId param
+    navigate(`/admin/update-user/${user._id}`);
   };
 
   const Avatar = ({ src, alt }) =>
@@ -69,7 +71,6 @@ const ManageUsers = () => {
         <p className="text-gray-400 italic text-center">No users yet.</p>
       ) : (
         <>
-          {/* Table layout for large screens */}
           <div className="hidden lg:block overflow-x-auto">
             <table className="min-w-full bg-[#0f172a] text-white rounded-lg">
               <thead>
@@ -115,32 +116,27 @@ const ManageUsers = () => {
                         />
                       </button>
                     </td>
-
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
 
-          {/* Card layout for small screens */}
           <div className="flex flex-col container mx-auto space-y-6 lg:hidden">
             {users.map((user) => (
               <div
                 key={user._id}
                 className="bg-[#0f172a] text-white rounded-xl p-6 shadow-lg border border-gray-700"
               >
-                {/* Avatar in center */}
                 <div className="flex justify-center">
                   <Avatar src={user.profileImageUrl} alt={user.name} />
                 </div>
 
-                {/* Name and Email */}
                 <div className="text-center space-y-1 mt-3">
                   <h3 className="font-semibold text-lg">{user.name}</h3>
                   <p className="text-gray-400 text-sm break-all">{user.email}</p>
                 </div>
 
-                {/* Task counts */}
                 <div className="flex flex-wrap justify-around text-sm font-medium text-center gap-3 mt-4">
                   <div className="text-yellow-400">
                     <p>Pending</p>
@@ -156,7 +152,6 @@ const ManageUsers = () => {
                   </div>
                 </div>
 
-                {/* Buttons */}
                 <div className="flex justify-around gap-4 pt-5">
                   <button
                     onClick={() => handleEdit(user)}
@@ -168,10 +163,11 @@ const ManageUsers = () => {
                   <button
                     onClick={() => openDeleteConfirm(user._id)}
                     disabled={deleting}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium shadow-md transition duration-200 ${deleting
-                      ? 'bg-red-300 text-white cursor-not-allowed'
-                      : 'bg-red-600 text-white hover:bg-red-700'
-                      }`}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium shadow-md transition duration-200 ${
+                      deleting
+                        ? 'bg-red-300 text-white cursor-not-allowed'
+                        : 'bg-red-600 text-white hover:bg-red-700'
+                    }`}
                   >
                     <Trash2 className="w-4 h-4" />
                     Delete
@@ -180,7 +176,6 @@ const ManageUsers = () => {
               </div>
             ))}
           </div>
-
         </>
       )}
 

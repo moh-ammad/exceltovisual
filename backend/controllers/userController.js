@@ -4,21 +4,21 @@ import mongoose from "mongoose";
 
 const getAllUsers = async (req, res) => {
     try {
-        const users=await User.find({
-            role:'member'
+        const users = await User.find({
+            role: 'member'
         }).select('-password');
-        const userWithPassCounts=await Promise.all(users.map(async (user)=>{
-            const pendingTasks=await Task.countDocuments({
+        const userWithPassCounts = await Promise.all(users.map(async (user) => {
+            const pendingTasks = await Task.countDocuments({
                 assignedTo: user._id,
                 status: 'pending'
             })
-            const inProgressTasks=await Task.countDocuments({
+            const inProgressTasks = await Task.countDocuments({
                 assignedTo: user._id,
-                status:"in-progress"
+                status: "in-progress"
             })
-            const completedTasks=await Task.countDocuments({
+            const completedTasks = await Task.countDocuments({
                 assignedTo: user._id,
-                status:"completed"
+                status: "completed"
             })
             return {
                 ...user.toObject(),
@@ -26,14 +26,14 @@ const getAllUsers = async (req, res) => {
                 inProgressTasks,
                 completedTasks
             }
-        
-        })
-    )
-    res.status(200).json(userWithPassCounts)
 
-}catch (error) {
+        })
+        )
+        res.status(200).json(userWithPassCounts)
+
+    } catch (error) {
         res.status(500).json({
-            message:"Error fetching users",
+            message: "Error fetching users",
             error: error.message
         })
     }
@@ -76,4 +76,40 @@ const deleteUser = async (req, res) => {
         })
     }
 }
-export { getAllUsers, getUserById, deleteUser }
+
+const updateUserByAdmin = async (req, res) => {
+    const { id } = req.params;
+    const { name, email, password, role, adminKey } = req.body || {};
+
+    try {
+        const user = await User.findById(id);
+        if (!user) return res.status(404).json({ message: "User not found" });
+
+        if (name) user.name = name;
+        if (email && email.includes("@")) user.email = email;
+
+        if (password && password.length >= 6) {
+            user.password = await bcrypt.hash(password, 10);
+        }
+
+        if (role) {
+            if (role === "admin") {
+                const correctAdminKey = process.env.ADMIN_INVITE_TOKEN;
+                if (!adminKey || adminKey !== correctAdminKey) {
+                    return res.status(403).json({ message: "Invalid admin key" });
+                }
+            }
+            user.role = role;
+        }
+
+        if (req.file) {
+            user.profileImageUrl = `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`;
+        }
+
+        await user.save();
+        res.status(200).json({ message: "User updated successfully" });
+    } catch (err) {
+        res.status(500).json({ message: "Failed to update user", error: err.message });
+    }
+};
+export { getAllUsers, getUserById, deleteUser, updateUserByAdmin }
