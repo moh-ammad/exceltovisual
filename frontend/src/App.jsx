@@ -30,6 +30,7 @@ import UploadPage from './components/UploadFile';
 import Visualize2D from './components/Visualize2D';
 import Visualize3D from './components/Visualize3D';
 import Profile from './components/Profile';
+import UpdateUser from './pages/Auth/UpdateUser';
 
 const App = () => {
   return (
@@ -49,6 +50,7 @@ const App = () => {
                 {/* Common routes */}
                 <Route path="/" element={<Home />} />
                 <Route path="/profile" element={<Profile />} />
+                <Route path="/update-profile" element={<UpdateUser />} />
                 <Route path="/upload" element={<UploadPage />} />
                 <Route path="/instructions" element={<Instructions />} />
                 <Route path="/visualize/2d" element={<Visualize2D />} />
@@ -57,7 +59,7 @@ const App = () => {
                 {/* User routes */}
                 <Route path="/tasks" element={<MyTasks />} />
                 <Route path="/view-task/:taskId" element={<ViewTaskDetails />} />
-                <Route path="/user-dashboard" element={<UserDashboard />} />
+                <Route path="/user/user-dashboard" element={<UserDashboard />} />
 
                 {/* Admin-only routes */}
                 <Route element={<PrivateRoute allowedRoles={['admin']} />}>

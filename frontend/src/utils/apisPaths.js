@@ -5,6 +5,7 @@ export const API_ENDPOINTS = {
         REGISTER: "/auth/register",
         LOGIN: "/auth/login",
         GET_PROFILE: "/auth/profile",
+        UPDATE_PROFILE: "/auth/profile",  // reuse same endpoint
     },
     USERS: {
         GET_ALL_USERS: "/users",
@@ -17,7 +18,7 @@ export const API_ENDPOINTS = {
         GET_DASHBOARD_DATA: "/tasks/dashboard-data",
         GET_ALL_TASKS: "/tasks",
         GET_TASK_BY_ID: (taskId) => `/tasks/${taskId}`,
-        CREATE_TASK: "/tasks",
+        CREATE_TASK: "/tasks/create",
         UPDATE_TASK: (taskId) => `/tasks/${taskId}`,
         DELETE_TASK: (taskId) => `/tasks/${taskId}`,
     },

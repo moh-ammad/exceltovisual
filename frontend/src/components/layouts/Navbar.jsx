@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 
 const Navbar = () => {
-  const { user, logout } = useContext(UserContext);
+  const { user, clearUser } = useContext(UserContext);
   const { theme, toggleTheme } = useContext(ThemeContext);
   const navigate = useNavigate();
   const location = useLocation();
@@ -30,7 +30,7 @@ const Navbar = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const handleLogout = () => {
-    logout();
+    clearUser();
     navigate('/login');
     setSidebarOpen(false); // close sidebar on logout
   };
@@ -50,7 +50,7 @@ const Navbar = () => {
     { label: 'Home', to: '/', icon: <Home size={18} /> },
     { label: 'Profile', to: '/profile', icon: <Users size={18} /> },
     { label: 'My Tasks', to: '/tasks', icon: <ClipboardList size={18} /> },
-    { label: 'Dashboard', to: '/user-dashboard', icon: <BarChart2 size={18} /> },
+    { label: 'Dashboard', to: '/user/user-dashboard', icon: <BarChart2 size={18} /> },
     { label: 'Upload', to: '/upload', icon: <Upload size={18} /> },
   ];
 

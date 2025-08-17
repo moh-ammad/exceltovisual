@@ -142,54 +142,70 @@ const getUserProfile = async (req, res) => {
     }
  }
 
-const updateUserProfile = async (req, res) => { 
-    let originalImageUrl;
-    
-    const user=await User.findById(req.user._id);
-    if(!user){
-        return res.status(404).json({ message: "User not found" });
+// controllers/authController.js
+
+const updateUserProfile = async (req, res) => {
+  let originalImageUrl;
+  const user = await User.findById(req.user._id);
+  if (!user) {
+    return res.status(404).json({ message: "User not found" });
+  }
+
+  const { name, email, password, role, adminKey } = req.body || {};
+
+  if (name) user.name = name;
+  if (email) {
+    if (!email.includes("@")) {
+      return res.status(400).json({ message: "Please enter a valid email" });
     }
-    const {name,email,profileImageUrl,password} = req.body||{};
-   
-    if(name) user.name = name;
-    if(email) {
-        if(!email.includes("@")) {
-            return res.status(400).json({ message: "Please enter a valid email" });
-        }
-        user.email = email;
+    user.email = email;
+  }
+
+  if (password) {
+    if (password.length < 6) {
+      return res.status(400).json({ message: "Password must be at least 6 characters" });
     }
-    if(profileImageUrl) user.profileImageUrl = profileImageUrl;
-    if(password) {
-        if(password.length < 6) {
-            return res.status(400).json({ message: "Password must be at least 6 characters" });
-        }
-        user.password = await bcrypt.hash(password, 10);
+    user.password = await bcrypt.hash(password, 10);
+  }
+
+  if (role) {
+    if (role === "admin") {
+      if (!adminKey || adminKey.trim() === "") {
+        return res.status(400).json({ message: "Admin key required for admin role" });
+      }
+      const correctAdminKey = process.env.ADMIN_INVITE_TOKEN;
+      if (adminKey !== correctAdminKey) {
+        return res.status(403).json({ message: "Invalid admin key" });
+      }
     }
-    if(req.file){
-        originalImageUrl = `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`;
-        user.profileImageUrl = originalImageUrl;
-    }
-    const updatedUser = await user.save();
-    const token = generateToken(updatedUser._id);
-    res.cookie("token", token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-    });
-    if(updatedUser) {
-        res.status(200).json({
-            _id: updatedUser._id,
-            name: updatedUser.name,
-            email: updatedUser.email,
-            profileImageUrl: updatedUser.profileImageUrl,
-            role: updatedUser.role,
-            token
-        });
-    } else {
-        res.status(400).json({ message: "Invalid user data" });
-    }
-}
+    user.role = role;
+  }
+
+  if (req.file) {
+    originalImageUrl = `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`;
+    user.profileImageUrl = originalImageUrl;
+  }
+
+  const updatedUser = await user.save();
+  const token = generateToken(updatedUser._id);
+
+  res.cookie("token", token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  });
+
+  res.status(200).json({
+    _id: updatedUser._id,
+    name: updatedUser.name,
+    email: updatedUser.email,
+    profileImageUrl: updatedUser.profileImageUrl,
+    role: updatedUser.role,
+    token,
+  });
+};
+
 
 export {
     registerUser,

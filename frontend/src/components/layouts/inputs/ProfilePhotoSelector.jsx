@@ -1,33 +1,40 @@
-import React, { useRef, useState, useEffect } from 'react';
-import { Upload, Trash2, User } from 'lucide-react';
+import React, { useRef, useState, useEffect } from "react";
+import { Upload, Trash2, User } from "lucide-react";
 
-const ProfilePhotoSelector = ({ profilePic, setProfilePic }) => {
+const ProfilePhotoSelector = ({
+  profilePic,
+  setProfilePic,
+  existingImageUrl,
+  clearExistingImage,
+}) => {
   const inputRef = useRef(null);
   const [previewUrl, setPreviewUrl] = useState(null);
 
   useEffect(() => {
-    if (typeof profilePic === 'string') {
-      setPreviewUrl(profilePic); // URL string (already uploaded)
-    } else if (profilePic) {
+    if (profilePic instanceof File) {
       const objectUrl = URL.createObjectURL(profilePic);
       setPreviewUrl(objectUrl);
-
-      return () => URL.revokeObjectURL(objectUrl); // cleanup on unmount or change
+      return () => URL.revokeObjectURL(objectUrl);
+    } else if (existingImageUrl) {
+      setPreviewUrl(existingImageUrl);
     } else {
       setPreviewUrl(null);
     }
-  }, [profilePic]);
+  }, [profilePic, existingImageUrl]);
 
   const handleImageChange = (e) => {
     const file = e.target.files?.[0];
-    if (file && file.type.startsWith('image/')) {
+    if (file && file.type.startsWith("image/")) {
       setProfilePic(file);
+      if (clearExistingImage) clearExistingImage();
     }
   };
 
-  const handleRemoveImage = () => {
+  const handleRemoveImage = (e) => {
+    e.stopPropagation();
     setProfilePic(null);
     setPreviewUrl(null);
+    if (clearExistingImage) clearExistingImage();
   };
 
   const onFileChoose = () => {
@@ -35,7 +42,14 @@ const ProfilePhotoSelector = ({ profilePic, setProfilePic }) => {
   };
 
   return (
-    <div className="relative w-30 h-30 rounded-full overflow-hidden flex items-center justify-center bg-blue-100/50  my-4 border border-gray-300">
+    <div
+      onClick={onFileChoose}
+      className="relative w-32 h-32 rounded-full overflow-hidden flex items-center justify-center bg-blue-100/50 border border-gray-300 cursor-pointer hover:border-blue-500 transition"
+      aria-label="Profile photo selector"
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => e.key === "Enter" && onFileChoose()}
+    >
       {previewUrl ? (
         <>
           <img
@@ -46,8 +60,7 @@ const ProfilePhotoSelector = ({ profilePic, setProfilePic }) => {
           <button
             type="button"
             onClick={handleRemoveImage}
-            className="absolute bottom-2 right-5 bg-red-600 text-white p-2 rounded-full shadow-md hover:bg-red-700 z-10"
-            style={{ width: 32, height: 32 }}
+            className="absolute bottom-3 right-3 bg-red-600 text-white p-1.5 rounded-full shadow-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-400 z-20 border-2 border-white dark:border-gray-800"
             aria-label="Remove profile picture"
           >
             <Trash2 size={16} />
@@ -55,12 +68,14 @@ const ProfilePhotoSelector = ({ profilePic, setProfilePic }) => {
         </>
       ) : (
         <>
-          {/* User Icon as placeholder */}
           <User size={56} className="text-gray-400 mb-3" />
           <button
             type="button"
-            onClick={onFileChoose}
-            className="absolute h-8 w-8 bottom-2 right-5 bg-blue-600 text-white p-2 rounded-full shadow-md hover:bg-blue-700 z-10"
+            onClick={(e) => {
+              e.stopPropagation();
+              onFileChoose();
+            }}
+            className="absolute bottom-3 right-3 bg-blue-600 text-white p-2 rounded-full shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 z-20 border-2 border-white dark:border-gray-800"
             aria-label="Upload profile picture"
           >
             <Upload size={16} />
@@ -70,7 +85,7 @@ const ProfilePhotoSelector = ({ profilePic, setProfilePic }) => {
 
       <input
         type="file"
-        name='image'
+        name="image"
         accept="image/*"
         ref={inputRef}
         onChange={handleImageChange}
