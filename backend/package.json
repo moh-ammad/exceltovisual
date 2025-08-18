@@ -11,7 +11,7 @@
   "keywords": [],
   "author": "Moh-ammad",
   "license": "MIT",
-  "packageManager": "yarn@4.9.1",
+  "packageManager": "yarn@1.22.2",
   "dependencies": {
     "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",
