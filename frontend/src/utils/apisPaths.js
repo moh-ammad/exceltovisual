@@ -1,11 +1,11 @@
-export const BASE_URL = "http://localhost:5000/api";
+export const BASE_URL = `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api`;
 
 export const API_ENDPOINTS = {
     AUTH: {
         REGISTER: "/auth/register",
         LOGIN: "/auth/login",
         GET_PROFILE: "/auth/profile",
-        UPDATE_PROFILE: "/auth/profile",  // reuse same endpoint
+        UPDATE_PROFILE: "/auth/profile",
     },
     USERS: {
         GET_ALL_USERS: "/users",
@@ -27,13 +27,8 @@ export const API_ENDPOINTS = {
         EXPORT_ALL_USERS: "/reports/exports/users",
         EXPORT_ALL_TASKS: "/reports/exports/tasks",
         EXPORT_USERS_AND_TASKS: "/reports/exports/users-tasks",
-        // If not implemented, comment or remove
-        // EXPORT_MY_TASKS: "/reports/exports/my-tasks",
     },
     IMPORTS: {
         UPLOAD_USERS_TASKS: "/reports/upload/users-tasks",
-        // If not implemented, comment or remove
-        // UPLOAD_TASKS_ADMIN: "/upload/tasks",
-        // UPLOAD_MY_TASKS: "/upload/my-tasks",
     }
 };
