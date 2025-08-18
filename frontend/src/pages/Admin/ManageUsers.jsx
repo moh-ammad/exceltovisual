@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { API_ENDPOINTS } from '@/utils/apisPaths';
-import toast from 'react-hot-toast';
+import { API_ENDPOINTS } from '@/utils/apisPaths.js';
+import { showError,showSuccess } from '@/utils/helper.js';
 import { Trash2, Edit, User } from 'lucide-react';
 import ConfirmationPopup from '@/createtasks/ConfirmationPopUp';
-import axiosInstance from '@/utils/axiosInstance';
+import axiosInstance from '@/utils/axiosInstance.js';
 
 const ManageUsers = () => {
   const [users, setUsers] = useState([]);
@@ -18,7 +18,7 @@ const ManageUsers = () => {
         const { data } = await axiosInstance.get(API_ENDPOINTS.USERS.GET_ALL_USERS);
         setUsers(data);
       } catch {
-        toast.error('Failed to load users');
+        showError('Failed to load users');
       }
     };
     fetchUsers();
@@ -33,11 +33,11 @@ const ManageUsers = () => {
 
     try {
       await axiosInstance.delete(API_ENDPOINTS.USERS.DELETE_USER(deleteUserId));
-      toast.success('User deleted successfully');
+      showSuccess('User deleted successfully');
       setUsers((prev) => prev.filter((u) => u._id !== deleteUserId));
       setDeleteUserId(null);
     } catch {
-      toast.error('Failed to delete user');
+      showError('Failed to delete user');
     } finally {
       setDeleting(false);
     }

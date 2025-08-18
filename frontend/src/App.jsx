@@ -5,33 +5,33 @@ import {
 } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 
-import UserContextProvider from './context/userContext';
-import ThemeProvider from './context/themeContext';
+import UserContextProvider from '@/context/userContext';
+import ThemeProvider from '@/context/themeContext';
 
-import Login from './pages/Auth/Login';
-import SignUp from './pages/Auth/SignUp';
+import Login from '@/pages/Auth/Login';
+import SignUp from '@/pages/Auth/SignUp';
 
-import ManageUsers from './pages/Admin/ManageUsers';
-import ManageTasks from './pages/Admin/ManageTasks';
-import CreateTask from './pages/Admin/CreateTask';
-import Dashboard from './pages/Admin/Dashboard';
+import ManageUsers from '@/pages/Admin/ManageUsers';
+import ManageTasks from '@/pages/Admin/ManageTasks';
+import CreateTask from '@/pages/Admin/CreateTask';
+import Dashboard from '@/pages/Admin/Dashboard';
 
-import UserDashboard from './pages/users/UserDashboard';
-import MyTasks from './pages/users/MyTasks';
-import ViewTaskDetails from './pages/users/ViewtaskDetails';
+import UserDashboard from '@/pages/users/UserDashboard';
+import MyTasks from '@/pages/users/MyTasks';
+import ViewTaskDetails from '@/pages/users/ViewtaskDetails';
 
-import PrivateRoute from './routes/PrivateRoute';
+import PrivateRoute from '@/routes/PrivateRoute';
 
-import Navbar from './components/layouts/Navbar';
-import Home from './components/layouts/Home';
-import Instructions from './components/Instructions';
-import UploadPage from './components/UploadFile';
-import Profile from './components/Profile';
-import UpdateUser from './pages/Auth/UpdateUser';
-import UpdateTask from './pages/Admin/UpdateTask';
+import Navbar from '@/components/layouts/Navbar';
+import Home from '@/components/layouts/Home';
+import Instructions from '@/components/Instructions';
+import UploadPage from '@/components/UploadFile';
+import Profile from '@/components/Profile';
+import UpdateUser from '@/pages/Auth/UpdateUser';
+import UpdateTask from '@/pages/Admin/UpdateTask';
 
-import Visualize2d from "./components/Visualize2d"
-import Visualize3d from './components/Visualize3d';
+import Visualize2d from "@/components/Visualize2d"
+import Visualize3d from '@/components/Visualize3d';
 
 const App = () => {
   return (
