@@ -31,7 +31,7 @@ import UpdateUser from './pages/Auth/UpdateUser';
 import UpdateTask from './pages/Admin/UpdateTask';
 
 import Visualize2d from "./components/Visualize2d"
-import Visualize3d from './components/Visualize3D';
+import Visualize3d from './components/Visualize3d';
 
 const App = () => {
   return (
