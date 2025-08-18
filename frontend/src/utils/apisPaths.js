@@ -23,12 +23,17 @@ export const API_ENDPOINTS = {
         DELETE_TASK: (taskId) => `/tasks/${taskId}`,
     },
     REPORTS: {
-        EXPORT_ALL_TASKS: "/exports/todos",         // Admin only
-        EXPORT_ALL_USERS: "/exports/users",         // Admin only
-        EXPORT_MY_TASKS: "/exports/my-tasks",       // For logged-in user
+        EXPORT_EMPTY_TEMPLATE: "/reports/exports/template",
+        EXPORT_ALL_USERS: "/reports/exports/users",
+        EXPORT_ALL_TASKS: "/reports/exports/tasks",
+        EXPORT_USERS_AND_TASKS: "/reports/exports/users-tasks",
+        // If not implemented, comment or remove
+        // EXPORT_MY_TASKS: "/reports/exports/my-tasks",
     },
     IMPORTS: {
-        UPLOAD_TASKS_ADMIN: "/upload/tasks",        // Admin only
-        UPLOAD_MY_TASKS: "/upload/my-tasks",        // For logged-in user
+        UPLOAD_USERS_TASKS: "/reports/upload/users-tasks",
+        // If not implemented, comment or remove
+        // UPLOAD_TASKS_ADMIN: "/upload/tasks",
+        // UPLOAD_MY_TASKS: "/upload/my-tasks",
     }
 };

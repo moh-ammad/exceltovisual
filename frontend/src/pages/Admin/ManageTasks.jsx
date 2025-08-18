@@ -24,7 +24,16 @@ const ManageTasks = () => {
     setLoading(true);
     try {
       const { data } = await axiosInstance.get(API_ENDPOINTS.TASKS.GET_ALL_TASKS);
-      setTasks(data.tasks);
+      
+      // Debug log
+      console.log("Fetched tasks:", data.tasks.map(t => t._id));
+
+      // Remove duplicates by task ID (in case backend is duplicating)
+      const uniqueTasks = Array.from(
+        new Map(data.tasks.map(task => [task._id, task])).values()
+      );
+
+      setTasks(uniqueTasks);
     } catch (error) {
       console.error(error);
       toast.error('Failed to fetch tasks');
@@ -38,7 +47,7 @@ const ManageTasks = () => {
     setDeleteLoading(true);
     try {
       await axiosInstance.delete(API_ENDPOINTS.TASKS.DELETE_TASK(selectedTaskId));
-     showSuccess('Task deleted');
+      showSuccess('Task deleted');
       setShowDeletePopup(false);
       fetchTasks();
     } catch (error) {
@@ -72,7 +81,6 @@ const ManageTasks = () => {
                 className="bg-white dark:bg-gray-800 p-5 rounded shadow border dark:border-gray-700"
               >
                 <div className="flex flex-col sm:flex-row justify-between sm:items-start gap-4">
-                  {/* Left: Task info */}
                   <div className="flex-1">
                     <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
                       {task.title}
@@ -97,7 +105,6 @@ const ManageTasks = () => {
                     </div>
                   </div>
 
-                  {/* Right: Actions and status */}
                   <div className="flex flex-col items-end gap-2 min-w-[120px]">
                     <div className="flex gap-2">
                       <button
@@ -157,7 +164,7 @@ const ManageTasks = () => {
 
 export default ManageTasks;
 
-// Helper for status color classes
+// Helper function for status styling
 const statusClass = (status) => {
   switch (status) {
     case 'pending':

@@ -8,20 +8,20 @@ import {
   importUsersAndTasks
 } from '../controllers/reportController.js';
 
-import { protect,AdminOnly } from '../middlewares/authMiddleware.js';
+import { protect, AdminOnly } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
 
 // Configure multer for file upload
 const upload = multer({ dest: 'uploads/' });
 
-// Export routes
-router.get('/exports/users', protect, AdminOnly, exportUserReport);
-router.get('/exports/tasks', protect, AdminOnly, exportTaskReport);
-router.get('/exports/users-tasks', protect, AdminOnly, exportUsersAndTasksReport);
-router.get('/exports/empty-template', protect, AdminOnly, exportEmptyTemplate);
+// EXPORT ROUTES
+router.get('/exports/template', protect, AdminOnly, exportEmptyTemplate);        // 1. Empty template
+router.get('/exports/users', protect, AdminOnly, exportUserReport);             // 2. Just users
+router.get('/exports/tasks', protect, AdminOnly, exportTaskReport);             // 3. Just tasks
+router.get('/exports/users-tasks', protect, AdminOnly, exportUsersAndTasksReport); // 4. Users + tasks
 
-// Import route (upload Excel file)
-router.post('/upload/users-tasks', protect, AdminOnly, upload.single('excelfile'), importUsersAndTasks);
+// IMPORT ROUTE
+router.post('/upload/users-tasks', protect, AdminOnly, upload.single('excelfile'), importUsersAndTasks); // 5. Import combined file
 
 export { router as reportRoutes };

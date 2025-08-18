@@ -11,15 +11,21 @@ const ProfilePhotoSelector = ({
   const [previewUrl, setPreviewUrl] = useState(null);
 
   useEffect(() => {
+    let objectUrl;
     if (profilePic instanceof File) {
-      const objectUrl = URL.createObjectURL(profilePic);
+      // Generate blob URL
+      objectUrl = URL.createObjectURL(profilePic);
       setPreviewUrl(objectUrl);
-      return () => URL.revokeObjectURL(objectUrl);
     } else if (existingImageUrl) {
       setPreviewUrl(existingImageUrl);
     } else {
       setPreviewUrl(null);
     }
+
+    return () => {
+      // Revoke old blob URL to avoid memory leaks
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
   }, [profilePic, existingImageUrl]);
 
   const handleImageChange = (e) => {
@@ -28,6 +34,8 @@ const ProfilePhotoSelector = ({
       setProfilePic(file);
       if (clearExistingImage) clearExistingImage();
     }
+    // Reset input to allow re-selecting the same file
+    e.target.value = null;
   };
 
   const handleRemoveImage = (e) => {
@@ -37,9 +45,7 @@ const ProfilePhotoSelector = ({
     if (clearExistingImage) clearExistingImage();
   };
 
-  const onFileChoose = () => {
-    inputRef.current?.click();
-  };
+  const onFileChoose = () => inputRef.current?.click();
 
   return (
     <div
@@ -82,7 +88,6 @@ const ProfilePhotoSelector = ({
           </button>
         </>
       )}
-
       <input
         type="file"
         name="image"
