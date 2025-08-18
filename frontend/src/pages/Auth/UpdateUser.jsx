@@ -9,7 +9,7 @@ import {
   showSuccess,
 } from "@/utils/helper";
 import { API_ENDPOINTS } from "@/utils/apisPaths";
-import axiosInstance from "../../utils/axiosInstance";
+import axiosInstance from "@/utils/axiosInstance";
 
 const UpdateUser = () => {
   const { userId } = useParams(); // Admin editing another user

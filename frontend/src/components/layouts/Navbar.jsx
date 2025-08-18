@@ -1,7 +1,7 @@
 import { useContext, useState } from 'react';
 import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { UserContext } from '../../context/userContext';
-import { ThemeContext } from '../../context/themeContext';
+import { UserContext } from '@/context/userContext';
+import { ThemeContext } from '@/context/themeContext';
 
 // lucide-react icons
 import {

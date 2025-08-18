@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect } from "react";
 import { Upload, Trash2, User } from "lucide-react";
 
 const ProfilePhotoSelector = ({

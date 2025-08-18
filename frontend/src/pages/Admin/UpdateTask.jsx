@@ -1,14 +1,14 @@
 import { useContext, useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { API_ENDPOINTS } from '../../utils/apisPaths';
+import { API_ENDPOINTS } from '@/utils/apisPaths';
 import toast from 'react-hot-toast';
-import { UserContext } from '../../context/userContext';
-import AttachmentList from '../../createtasks/AttachmentList';
+import { UserContext } from '@/context/userContext';
+import AttachmentList from '@/createtasks/AttachmentList';
 // Updated import name here:
-import UserSelection from '../../createtasks/UserSelection';
-import { showError, showSuccess } from '../../utils/helper';
-import TodoChecklist from '../../components/TodoCheckList';
-import axiosInstance from '../../utils/axiosInstance';
+import UserSelection from '@/createtasks/UserSelection';
+import { showError, showSuccess } from '@/utils/helper';
+import TodoChecklist from '@/components/TodoCheckList';
+import axiosInstance from '@/utils/axiosInstance';
 
 const UpdateTask = () => {
   const { taskId } = useParams();

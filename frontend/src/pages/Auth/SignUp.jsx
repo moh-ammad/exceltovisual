@@ -9,8 +9,8 @@ import {
   validatePassword,
 } from "@/utils/helper";
 import { useNavigate } from "react-router-dom";
-import axiosInstance from "../../utils/axiosInstance";
-import { API_ENDPOINTS } from "../../utils/apisPaths";
+import axiosInstance from "@/utils/axiosInstance";
+import { API_ENDPOINTS } from "@/utils/apisPaths";
 
 const SignUp = () => {
   const [formData, setFormData] = useState({
