@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axiosInstance from '../../utils/axiosInstance';
 import { API_ENDPOINTS } from '../../utils/apisPaths';
 import toast from 'react-hot-toast';
 import { Trash2, Edit, User } from 'lucide-react';
 import ConfirmationPopup from '../../createtasks/ConfirmationPopUp';
+import axiosInstance from '../../utils/axiosInstance';
 
 const ManageUsers = () => {
   const [users, setUsers] = useState([]);
