@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import AuthLayout from "@/components/layouts/AuthLayout";
 import { Input, Select } from "@/components/layouts/inputs/Input";
 import ProfilePhotoSelector from "@/components/layouts/inputs/ProfilePhotoSelector";
@@ -9,8 +9,8 @@ import {
   validatePassword,
 } from "@/utils/helper";
 import { useNavigate } from "react-router-dom";
-import { API_ENDPOINTS } from "@/utils/apisPaths";
-import axiosInstance from "@/utils/axiosinstance";
+import axiosInstance from "../../utils/axiosInstance";
+import { API_ENDPOINTS } from "../../utils/apisPaths";
 
 const SignUp = () => {
   const [formData, setFormData] = useState({

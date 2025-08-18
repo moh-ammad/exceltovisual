@@ -8,9 +8,9 @@ import {
   showError,
   showSuccess,
 } from '@/utils/helper';
-import axiosInstance from '@/utils/axiosInstance';
-import { API_ENDPOINTS } from '@/utils/apisPaths';
 import { UserContext } from '../../context/userContext';
+import axiosInstance from '../../utils/axiosInstance';
+import { API_ENDPOINTS } from '../../utils/apisPaths';
 
 const Login = () => {
   const [formData, setFormData] = useState({ email: '', password: '' });
