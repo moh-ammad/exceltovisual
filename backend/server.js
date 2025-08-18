@@ -27,11 +27,16 @@ app.use(cors({
 }))
 
 connectTodb()
+app.get('/', (req, res) => {
+  res.send('Backend is running');
+});
 // routes
 app.use('/api/auth',authRoutes)
 app.use('/api/users',userRoutes)
 app.use('/api/tasks',taskRoutes)
 app.use('/api/reports',reportRoutes)
+
+
 
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`)
