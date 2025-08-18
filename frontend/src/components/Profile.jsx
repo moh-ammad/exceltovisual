@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import axiosInstance from '@/utils/axiosInstance.js';
-import { API_ENDPOINTS } from '@/utils/apisPaths.js';
+import axiosInstance from '@/utils/axiosInstance';
+import { API_ENDPOINTS } from '@/utils/apisPaths';
 import { useNavigate } from 'react-router-dom';
 import { User as UserIcon } from 'lucide-react';
 
