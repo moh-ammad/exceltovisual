@@ -26,11 +26,12 @@ import Navbar from './components/layouts/Navbar';
 import Home from './components/layouts/Home';
 import Instructions from './components/Instructions';
 import UploadPage from './components/UploadFile';
-import Visualize2D from './components/Visualize2D';
-import Visualize3D from './components/Visualize3D';
 import Profile from './components/Profile';
 import UpdateUser from './pages/Auth/UpdateUser';
 import UpdateTask from './pages/Admin/UpdateTask';
+
+import Visualize2d from "./components/Visualize2d"
+import Visualize3d from './components/Visualize3D';
 
 const App = () => {
   return (
@@ -55,8 +56,8 @@ const App = () => {
 
                 <Route path="/upload" element={<UploadPage />} />
                 <Route path="/instructions" element={<Instructions />} />
-                <Route path="/visualize/2d" element={<Visualize2D />} />
-                <Route path="/visualize/3d" element={<Visualize3D />} />
+                <Route path="/visualize/2d" element={<Visualize2d />} />
+                <Route path="/visualize/3d" element={<Visualize3d />} />
 
                 {/* ✅ Fixed this line */}
                 <Route path="/update-task/:taskId" element={<UpdateTask />} />
