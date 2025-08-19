@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import { memo } from 'react';
 import { UserRound } from 'lucide-react';
 
 const UserAvatar = memo(({ src, name = "User avatar" }) => {

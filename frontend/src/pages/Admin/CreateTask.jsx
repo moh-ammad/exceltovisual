@@ -5,11 +5,11 @@ import UserSelection from '@/createtasks/UserSelection';
 import AttachmentList from '@/createtasks/AttachmentList';
 import TodoList from '@/createtasks/TodoList';
 import { UserRoundPlus } from 'lucide-react';
-import UserAvatar from '@/createtasks/Useravatar';
 import { useNavigate } from 'react-router-dom';
 import { UserContext } from '@/context/userContext';
 import { showError, showSuccess } from '@/utils/helper';
 import axiosInstance from '@/utils/axiosInstance';
+import UserAvatar from '@/createtasks/UserAvatar';
 
 const CreateTask = () => {
   const [users, setUsers] = useState([]);
