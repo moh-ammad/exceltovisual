@@ -7,10 +7,10 @@ import {
   validatePassword,
   showError,
   showSuccess,
-} from '@/utils/helper';
+} from '@/utils/helper.js';
 import { UserContext } from '@/context/userContext';
-import axiosInstance from '@/utils/axiosInstance';
-import { API_ENDPOINTS } from '@/utils/apisPaths';
+import axiosInstance from '@/utils/axiosInstance.js';
+import { API_ENDPOINTS } from '@/utils/apisPaths.js';
 
 const Login = () => {
   const [formData, setFormData] = useState({ email: '', password: '' });
