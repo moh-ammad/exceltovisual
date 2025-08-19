@@ -1,7 +1,7 @@
 // context/UserContextProvider
 
 import { createContext, useEffect, useState } from 'react';
-import axiosInstance from '@/utils/axiosInstance';
+import axiosInstance from "@/utils/axiosInstance"
 import { API_ENDPOINTS } from '@/utils/apisPaths';
 
 export const UserContext = createContext();
