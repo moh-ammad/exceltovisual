@@ -54,6 +54,8 @@
   --color-primary: #1368EC;
 }
 
+
+
 /* Base layer styles */
 @layer base {
   html {

@@ -1,0 +1,84 @@
+/* Visualize2d.module.css */
+
+.container {
+  padding: 1.5rem;
+  color: #e5e7eb; /* text-gray-200 */
+  background-color: #111827; /* optional dark bg if needed */
+}
+
+.title {
+  font-size: 1.5rem; /* text-2xl */
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+}
+
+.chartWrapper {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+  justify-content: center;
+}
+
+.card {
+  background-color: #374151; /* bg-gray-700 */
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  flex: 1;
+  min-width: 320px;
+  max-width: 480px;
+  color: #d1d5db; /* gray-300 text */
+}
+
+.cardTitle {
+  font-size: 1.125rem; /* text-lg */
+  font-weight: 600;
+  color: #818cf8; /* indigo-400 */
+  margin-bottom: 1rem;
+}
+
+.legendText {
+  color: #f3f4f6; /* text-gray-100 */
+}
+
+.buttonGroup {
+  margin-top: 2rem;
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+}
+
+.button {
+  border-radius: 0.375rem;
+  padding: 0.75rem 1.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  color: white;
+  border: none;
+}
+
+.btnIndigo {
+  background-color: #6366f1; /* indigo-500 */
+}
+
+.btnIndigo:hover {
+  background-color: #4f46e5; /* indigo-600 */
+}
+
+.btnGreen {
+  background-color: #10b981; /* emerald-500 */
+}
+
+.btnGreen:hover {
+  background-color: #059669; /* emerald-600 */
+}
+
+.btnYellow {
+  background-color: #fbbf24; /* yellow-400 */
+  color: #1f2937; /* gray-800 */
+}
+
+.btnYellow:hover {
+  background-color: #f59e0b; /* yellow-500 */
+}

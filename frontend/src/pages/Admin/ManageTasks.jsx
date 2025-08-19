@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { API_ENDPOINTS } from '@/utils/apisPaths';
 import toast from 'react-hot-toast';
-import { Trash2, Pencil } from 'lucide-react';
+import { Trash2, Pencil, Download } from 'lucide-react';
+import FileSaver from 'file-saver';
 import { useNavigate } from 'react-router-dom';
 import ConfirmationPopup from '@/createtasks/ConfirmationPopUp';
 import { showError, showSuccess } from '@/utils/helper';
@@ -24,7 +25,7 @@ const ManageTasks = () => {
     setLoading(true);
     try {
       const { data } = await axiosInstance.get(API_ENDPOINTS.TASKS.GET_ALL_TASKS);
-      
+
       // Debug log
       console.log("Fetched tasks:", data.tasks.map(t => t._id));
 
@@ -62,9 +63,37 @@ const ManageTasks = () => {
     return <div className="p-6 text-center text-gray-500 dark:text-gray-300">Loading tasks...</div>;
   }
 
+  const handleDownloadTasks = async () => {
+    try {
+      const response = await axiosInstance.get(API_ENDPOINTS.REPORTS.EXPORT_ALL_TASKS, {
+        responseType: 'blob',
+      });
+
+      const blob = new Blob([response.data], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      });
+
+      FileSaver.saveAs(blob, 'tasks.xlsx');
+      showSuccess('Tasks Excel downloaded');
+    } catch (error) {
+      showError('Failed to download tasks');
+    }
+  };
+
+
   return (
     <div className="p-6 max-w-6xl mx-auto">
-      <h1 className="text-3xl font-bold mb-6 dark:text-white text-gray-900">Manage Tasks</h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold dark:text-white text-gray-900">Manage Tasks</h1>
+        <button
+          onClick={handleDownloadTasks}
+          className="flex items-center gap-2 px-4 py-2 rounded-md bg-green-600 hover:bg-green-700 text-white text-sm font-semibold shadow transition"
+        >
+          <Download className="w-4 h-4" />
+          Download Tasks
+        </button>
+      </div>
+
 
       {tasks.length === 0 ? (
         <p className="text-gray-500 dark:text-gray-400">No tasks available.</p>

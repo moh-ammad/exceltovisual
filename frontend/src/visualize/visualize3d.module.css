@@ -1,0 +1,106 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: #1f2937; /* Dark background for the 3D dashboard */
+  min-height: 100vh;
+  padding: 20px;
+  color: white;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.title {
+  font-size: 2rem;
+  margin-bottom: 20px;
+  font-weight: 700;
+  text-align: center;
+  user-select: none;
+}
+
+.chartsContainer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 30px;
+  width: 100%;
+  max-width: 1200px;
+}
+
+.chartBox {
+  background-color: #111827; /* dark panel */
+  border-radius: 12px;
+  padding: 20px;
+  width: 380px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.7);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.chartTitle {
+  color: #e0e7ff;
+  font-weight: 600;
+  margin-bottom: 12px;
+  user-select: none;
+}
+
+.downloadButtons {
+  margin-top: 30px;
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+  width: 100%;
+  max-width: 600px;
+}
+
+.btnIndigo,
+.btnGreen,
+.btnYellow {
+  cursor: pointer;
+  padding: 12px 20px;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  transition: background-color 0.3s ease;
+  color: white;
+  user-select: none;
+}
+
+.btnIndigo {
+  background-color: #6366f1;
+}
+
+.btnIndigo:hover {
+  background-color: #4f46e5;
+}
+
+.btnGreen {
+  background-color: #10b981;
+}
+
+.btnGreen:hover {
+  background-color: #059669;
+}
+
+.btnYellow {
+  background-color: #f59e0b;
+}
+
+.btnYellow:hover {
+  background-color: #d97706;
+}
+
+/* Tooltip styles (for CustomTooltip wrapper if needed) */
+.tooltipWrapper {
+  pointer-events: none; /* So it doesn't block pointer events */
+  background: rgba(51, 65, 85, 0.85);
+  padding: 8px 14px;
+  border-radius: 8px;
+  color: white;
+  font-size: 0.9rem;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6);
+  user-select: none;
+}

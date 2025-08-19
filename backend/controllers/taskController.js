@@ -1,4 +1,4 @@
-import syncTaskStatusWithTodos, { getTaskStats } from "../helper.js";
+import syncTaskStatusWithTodos from "../helper.js";
 import Task from "../models/task.js";
 import User from "../models/user.js";
 import mongoose from "mongoose";
@@ -15,11 +15,8 @@ const getAllTasks = async (req, res) => {
     let tasks = await Task.find(taskFilter).populate('assignedTo', 'name email profileImageUrl');
 
     tasks = tasks.map(task => {
-      const completedCount = task.todoChecklist.filter(todo => todo.completed).length;
-      return {
-        ...task.toObject(),
-        completedTodoCount: completedCount
-      };
+      const completedTodoCount = task.todoChecklist.filter(todo => todo.completed).length;
+      return { ...task.toObject(), completedTodoCount };
     });
 
     const baseFilter = isAdmin ? {} : { assignedTo: req.user._id };
@@ -28,53 +25,41 @@ const getAllTasks = async (req, res) => {
       Task.countDocuments(baseFilter),
       Task.countDocuments({ ...baseFilter, status: 'pending' }),
       Task.countDocuments({ ...baseFilter, status: 'in-progress' }),
-      Task.countDocuments({ ...baseFilter, status: 'completed' })
+      Task.countDocuments({ ...baseFilter, status: 'completed' }),
     ]);
 
     res.status(200).json({
       tasks,
-      statusSummary: {
-        totalTasks,
-        pendingTasks,
-        inProgressTasks,
-        completedTasks,
-      }
+      statusSummary: { totalTasks, pendingTasks, inProgressTasks, completedTasks }
     });
-
   } catch (error) {
-    console.error("Error in getDashboardData:", error.message);
-    res.status(500).json({
-      message: "Failed to fetch dashboard data",
-      error: error.message
-    });
+    console.error("Error in getAllTasks:", error.message);
+    res.status(500).json({ message: "Failed to fetch tasks", error: error.message });
   }
 };
 
 const getTaskById = async (req, res) => {
   const { id } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).json({ message: "Invalid task ID" });
+  }
+
   try {
     const task = await Task.findById(id).populate('assignedTo', 'name email profileImageUrl');
-    if (!task) {
-      return res.status(404).json({ message: "Task not found" });
-    }
+    if (!task) return res.status(404).json({ message: "Task not found" });
 
     const isAdmin = req.user.role === 'admin';
-    if (!isAdmin && !task.assignedTo.some(user => user._id.equals(req.user._id))) {
-      return res.status(403).json({ message: "You are not authorized to view this task" });
+    const isAssigned = task.assignedTo.some(user => user._id.equals(req.user._id));
+
+    if (!isAdmin && !isAssigned) {
+      return res.status(403).json({ message: "Not authorized to view this task" });
     }
 
-    const completedCount = task.todoChecklist.filter(todo => todo.completed).length;
-    const enrichedTask = {
-      ...task.toObject(),
-      completedTodoCount: completedCount
-    };
-
-    res.status(200).json(enrichedTask);
+    const completedTodoCount = task.todoChecklist.filter(todo => todo.completed).length;
+    res.status(200).json({ ...task.toObject(), completedTodoCount });
   } catch (error) {
-    res.status(500).json({
-      message: "Error fetching task",
-      error: error.message
-    });
+    res.status(500).json({ message: "Error fetching task", error: error.message });
   }
 };
 
@@ -91,33 +76,23 @@ const createTask = async (req, res) => {
     } = req.body;
 
     if (!title || !description || !priority || !dueDate || !Array.isArray(assignedTo) || assignedTo.length === 0) {
-      return res.status(400).json({ message: "Missing required fields or 'assignedTo' must be a non-empty array" });
+      return res.status(400).json({ message: "Missing required fields or invalid assignedTo" });
     }
 
-    const existingTask = await Task.findOne({
-      title,
-      dueDate,
-      createdBy: req.user._id,
-    });
-
-    if (existingTask) {
-      return res.status(409).json({ message: "Task with the same title and due date already exists" });
-    }
-
+    // Validate assignedTo users
     for (const userId of assignedTo) {
       if (!mongoose.Types.ObjectId.isValid(userId)) {
         return res.status(400).json({ message: `Invalid user ID: ${userId}` });
       }
-      const userExists = await User.exists({ _id: userId });
-      if (!userExists) {
+      if (!(await User.exists({ _id: userId }))) {
         return res.status(404).json({ message: `User not found: ${userId}` });
       }
     }
 
+    // Validate attachments array
     if (!Array.isArray(attachments)) {
       return res.status(400).json({ message: "Attachments must be an array." });
     }
-
     for (const att of attachments) {
       if (typeof att !== 'object' || !att.name || !att.url) {
         return res.status(400).json({ message: "Each attachment must have a name and url." });
@@ -128,7 +103,7 @@ const createTask = async (req, res) => {
       title,
       description,
       priority,
-      dueDate,
+      dueDate: new Date(dueDate),
       assignedTo,
       createdBy: req.user._id,
       attachments,
@@ -138,7 +113,9 @@ const createTask = async (req, res) => {
     syncTaskStatusWithTodos(newTask);
     await newTask.save();
 
-    res.status(201).json(newTask);
+    const populatedTask = await newTask.populate('assignedTo', 'name email profileImageUrl').execPopulate();
+
+    res.status(201).json(populatedTask);
   } catch (error) {
     console.error("Error creating task:", error);
     res.status(500).json({ message: "Failed to create task", error: error.message });
@@ -147,78 +124,83 @@ const createTask = async (req, res) => {
 
 const updateTask = async (req, res) => {
   const { id } = req.params;
-
-  if (!id) {
-    return res.status(400).json({ message: "Task ID is required" });
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).json({ message: "Invalid task ID" });
   }
 
   try {
     const task = await Task.findById(id).populate('assignedTo', 'name email profileImageUrl');
-    if (!task) {
-      return res.status(404).json({ message: "Task not found" });
-    }
+    if (!task) return res.status(404).json({ message: "Task not found" });
 
     const isAdmin = req.user.role === 'admin';
-    const assignedUsers = Array.isArray(task.assignedTo) ? task.assignedTo : [task.assignedTo];
-    const isAssignedUser = assignedUsers.some(user => user._id.toString() === req.user._id.toString());
-
-    if (!isAdmin && !isAssignedUser) {
+    const isAssigned = task.assignedTo.some(user => user._id.equals(req.user._id));
+    if (!isAdmin && !isAssigned) {
       return res.status(403).json({ message: "Access denied: Only admin or assigned users can update this task." });
     }
 
-    const updates = Object.fromEntries(
-      Object.entries(req.body || {}).filter(([key]) =>
-        isAdmin
-          ? ["title", "description", "dueDate", "priority", "todoChecklist", "attachments"].includes(key)
-          : ["todoChecklist"].includes(key)
-      )
-    );
+    const allowedFields = isAdmin
+      ? ["title", "description", "dueDate", "priority", "todoChecklist", "attachments", "assignedTo"]
+      : ["todoChecklist"];
+
+    const updates = {};
+    for (const key of allowedFields) {
+      if (req.body[key] !== undefined) {
+        updates[key] = req.body[key];
+      }
+    }
+
+    // Validate assignedTo if admin updating
+    if (isAdmin && updates.assignedTo) {
+      if (!Array.isArray(updates.assignedTo)) {
+        return res.status(400).json({ message: "assignedTo must be an array" });
+      }
+      for (const userId of updates.assignedTo) {
+        if (!mongoose.Types.ObjectId.isValid(userId)) {
+          return res.status(400).json({ message: `Invalid user ID: ${userId}` });
+        }
+        if (!(await User.exists({ _id: userId }))) {
+          return res.status(404).json({ message: `User not found: ${userId}` });
+        }
+      }
+      task.assignedTo = updates.assignedTo;
+    }
 
     if (updates.dueDate) {
-      const dateObj = new Date(updates.dueDate);
-      if (!isNaN(dateObj.getTime())) {
-        task.dueDate = dateObj;
-      } else {
+      const dueDateObj = new Date(updates.dueDate);
+      if (isNaN(dueDateObj.getTime())) {
         return res.status(400).json({ message: "Invalid dueDate format" });
       }
+      task.dueDate = dueDateObj;
     }
 
     if (updates.todoChecklist) {
       if (!Array.isArray(updates.todoChecklist)) {
-        return res.status(400).json({ message: "todoChecklist should be an array" });
+        return res.status(400).json({ message: "todoChecklist must be an array" });
       }
-
       task.todoChecklist = updates.todoChecklist.map(todo => {
-        let normalizedTodo = { ...todo };
         if (todo.dueDate) {
           const todoDate = new Date(todo.dueDate);
-          if (isNaN(todoDate.getTime())) {
-            throw new Error("Invalid todo dueDate format");
-          }
-          normalizedTodo.dueDate = todoDate;
+          if (isNaN(todoDate.getTime())) throw new Error("Invalid todo dueDate format");
+          return { ...todo, dueDate: todoDate };
         }
-        return normalizedTodo;
+        return todo;
       });
     }
 
     if (isAdmin) {
-      ["title", "description", "priority"].forEach(field => {
-        if (updates[field] !== undefined) {
-          task[field] = updates[field];
-        }
-      });
+      if (updates.title !== undefined) task.title = updates.title;
+      if (updates.description !== undefined) task.description = updates.description;
+      if (updates.priority !== undefined) task.priority = updates.priority;
 
       if (updates.attachments !== undefined) {
         if (!Array.isArray(updates.attachments)) {
           return res.status(400).json({ message: "Attachments must be an array." });
         }
-
         for (const att of updates.attachments) {
           if (typeof att !== 'object' || !att.name || !att.url) {
             return res.status(400).json({ message: "Each attachment must have a name and url." });
           }
         }
-
         task.attachments = updates.attachments;
       }
     }
@@ -229,31 +211,27 @@ const updateTask = async (req, res) => {
     res.status(200).json(task);
   } catch (error) {
     console.error("Error updating task:", error);
-    res.status(500).json({
-      message: "Error updating task",
-      error: error.message
-    });
+    res.status(500).json({ message: "Error updating task", error: error.message });
   }
 };
 
 const deleteTask = async (req, res) => {
-  const { id } = req.params;
-
   if (req.user.role !== 'admin') {
     return res.status(403).json({ message: "Only admin can delete tasks" });
   }
 
+  const { id } = req.params;
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).json({ message: "Invalid task ID" });
+  }
+
   try {
     const task = await Task.findByIdAndDelete(id);
-    if (!task) {
-      return res.status(404).json({ message: "Task not found" });
-    }
+    if (!task) return res.status(404).json({ message: "Task not found" });
+
     res.status(200).json({ message: "Task deleted successfully" });
   } catch (error) {
-    res.status(500).json({
-      message: "Error deleting task",
-      error: error.message
-    });
+    res.status(500).json({ message: "Error deleting task", error: error.message });
   }
 };
 
@@ -262,29 +240,13 @@ const getDashboardData = async (req, res) => {
     const filter = req.user.role === 'admin' ? {} : { assignedTo: req.user._id };
 
     const tasksByStatus = await Task.aggregate([
-      {
-        $match: {
-          ...filter,
-          status: { $ne: 'completed' },
-          dueDate: { $lt: new Date() }
-        }
-      },
-      {
-        $group: {
-          _id: "$status",
-          count: { $sum: 1 }
-        }
-      }
+      { $match: { ...filter, status: { $ne: 'completed' }, dueDate: { $lt: new Date() } } },
+      { $group: { _id: "$status", count: { $sum: 1 } } }
     ]);
 
     const tasksByPriority = await Task.aggregate([
       { $match: filter },
-      {
-        $group: {
-          _id: "$priority",
-          count: { $sum: 1 }
-        }
-      }
+      { $group: { _id: "$priority", count: { $sum: 1 } } }
     ]);
 
     const recentTasks = await Task.find(filter)
@@ -292,16 +254,9 @@ const getDashboardData = async (req, res) => {
       .limit(5)
       .select("title status priority createdAt");
 
-    res.status(200).json({
-      statusSummary: tasksByStatus,
-      prioritySummary: tasksByPriority,
-      recentTasks
-    });
+    res.status(200).json({ statusSummary: tasksByStatus, prioritySummary: tasksByPriority, recentTasks });
   } catch (error) {
-    res.status(500).json({
-      message: "Error fetching dashboard data",
-      error: error.message,
-    });
+    res.status(500).json({ message: "Error fetching dashboard data", error: error.message });
   }
 };
 
@@ -309,22 +264,24 @@ const updateTaskStatus = async (req, res) => {
   const { id } = req.params;
   const { todoChecklist } = req.body;
 
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).json({ message: "Invalid task ID" });
+  }
+
   try {
     const task = await Task.findById(id);
-    if (!task) {
-      return res.status(404).json({ message: "Task not found" });
-    }
+    if (!task) return res.status(404).json({ message: "Task not found" });
 
     const isAdmin = req.user.role === 'admin';
-    const isAssignedUser = task.assignedTo.some(
-      userId => userId.toString() === req.user._id.toString()
-    );
-
+    const isAssignedUser = task.assignedTo.some(userId => userId.equals(req.user._id));
     if (!isAdmin && !isAssignedUser) {
       return res.status(403).json({ message: "Access denied: Only admin or assigned users can update this task." });
     }
 
     if (todoChecklist) {
+      if (!Array.isArray(todoChecklist)) {
+        return res.status(400).json({ message: "todoChecklist must be an array" });
+      }
       task.todoChecklist = todoChecklist;
     }
 
@@ -333,10 +290,7 @@ const updateTaskStatus = async (req, res) => {
 
     res.status(200).json(task);
   } catch (error) {
-    res.status(500).json({
-      message: "Error updating task status",
-      error: error.message,
-    });
+    res.status(500).json({ message: "Error updating task status", error: error.message });
   }
 };
 
@@ -348,30 +302,26 @@ const updateTaskChecklist = async (req, res) => {
     return res.status(400).json({ message: "Checklist must be an array." });
   }
 
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).json({ message: "Invalid task ID" });
+  }
+
   try {
     const task = await Task.findById(id);
-    if (!task) {
-      return res.status(404).json({ message: "Task not found." });
-    }
+    if (!task) return res.status(404).json({ message: "Task not found." });
 
     const isAdmin = req.user.role === 'admin';
-    const isAssignedUser = task.assignedTo.some(
-      userId => userId.toString() === req.user._id.toString()
-    );
-
+    const isAssignedUser = task.assignedTo.some(userId => userId.equals(req.user._id));
     if (!isAdmin && !isAssignedUser) {
       return res.status(403).json({ message: "Access denied: Only admin or assigned users can update this task." });
     }
 
-    task.todoChecklist = [...task.todoChecklist, ...checklist];
+    task.todoChecklist.push(...checklist);
     await task.save();
 
     res.status(200).json(task);
   } catch (error) {
-    res.status(500).json({
-      message: "Error updating checklist",
-      error: error.message,
-    });
+    res.status(500).json({ message: "Error updating checklist", error: error.message });
   }
 };
 
@@ -383,5 +333,5 @@ export {
   deleteTask,
   getDashboardData,
   updateTaskStatus,
-  updateTaskChecklist
+  updateTaskChecklist,
 };

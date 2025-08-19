@@ -11,5 +11,5 @@
     "moduleResolution": "node",
     "resolveJsonModule": true
   },
-  "include": ["src"]
+  "include": ["src", "src/uploads/UploadControls.jsx", "src/uploads/FileUploader.jsx"]
 }

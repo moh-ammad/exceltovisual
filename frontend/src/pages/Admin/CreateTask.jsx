@@ -8,8 +8,8 @@ import { UserRoundPlus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { UserContext } from '@/context/userContext';
 import { showError, showSuccess } from '@/utils/helper';
-import axiosInstance from '@/utils/axiosInstance';
 import UserAvatar from '@/createtasks/UserAvatar';
+import axiosInstance from '@/utils/axiosinstance';
 
 const CreateTask = () => {
   const [users, setUsers] = useState([]);

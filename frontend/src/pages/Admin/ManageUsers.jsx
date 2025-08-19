@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { API_ENDPOINTS } from '@/utils/apisPaths';
-import { showError,showSuccess } from '@/utils/helper';
-import { Trash2, Edit, User } from 'lucide-react';
+import { showError, showSuccess } from '@/utils/helper';
+import { Trash2, Edit, User,Download } from 'lucide-react';
 import ConfirmationPopup from '@/createtasks/ConfirmationPopUp';
+import FileSaver from 'file-saver';
 import axiosInstance from '@/utils/axiosInstance';
 
 const ManageUsers = () => {
@@ -61,11 +62,39 @@ const ManageUsers = () => {
       </span>
     );
 
+    const handleDownloadUsers = async () => {
+  try {
+    const response = await axiosInstance.get(API_ENDPOINTS.REPORTS.EXPORT_ALL_USERS, {
+      responseType: 'blob',
+    });
+
+    const blob = new Blob([response.data], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+
+    FileSaver.saveAs(blob, 'users.xlsx');
+    showSuccess('Users Excel downloaded');
+  } catch (error) {
+    showError('Failed to download users');
+  }
+};
+
+
   return (
     <div className="p-4 max-w-7xl mx-auto">
-      <h1 className="text-xl sm:text-2xl font-bold text-white mb-6 text-center sm:text-left">
-        Manage Users
-      </h1>
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-xl sm:text-2xl font-bold text-white text-center sm:text-left">
+          Manage Users
+        </h1>
+        <button
+          onClick={handleDownloadUsers}
+          className="flex items-center gap-2 px-4 py-2 rounded-md bg-green-600 hover:bg-green-700 text-white text-sm font-semibold shadow transition"
+        >
+          <Download className="w-4 h-4" />
+          Download Users
+        </button>
+      </div>
+
 
       {users.length === 0 ? (
         <p className="text-gray-400 italic text-center">No users yet.</p>
@@ -163,11 +192,10 @@ const ManageUsers = () => {
                   <button
                     onClick={() => openDeleteConfirm(user._id)}
                     disabled={deleting}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium shadow-md transition duration-200 ${
-                      deleting
+                    className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium shadow-md transition duration-200 ${deleting
                         ? 'bg-red-300 text-white cursor-not-allowed'
                         : 'bg-red-600 text-white hover:bg-red-700'
-                    }`}
+                      }`}
                   >
                     <Trash2 className="w-4 h-4" />
                     Delete

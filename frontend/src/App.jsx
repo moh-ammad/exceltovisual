@@ -25,13 +25,13 @@ import PrivateRoute from '@/routes/PrivateRoute';
 import Navbar from '@/components/layouts/Navbar';
 import Home from '@/components/layouts/Home';
 import Instructions from '@/components/Instructions';
-import UploadPage from '@/components/UploadFile';
+import UploadPage from '@/components/UploadPage';
 import Profile from '@/components/Profile';
 import UpdateUser from '@/pages/Auth/UpdateUser';
 import UpdateTask from '@/pages/Admin/UpdateTask';
 
-import Visualize2d from "@/components/Visualize2d"
-import Visualize3d from '@/components/Visualize3d';
+import Visualize2d from "@/visualize/Visualize2d"
+import Visualize3d from '@/visualize/Visualize3d';
 
 const App = () => {
   return (
