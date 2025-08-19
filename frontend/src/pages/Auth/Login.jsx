@@ -9,8 +9,8 @@ import {
   showSuccess,
 } from '@/utils/helper';
 import { UserContext } from '@/context/userContext';
-import axiosInstance from '@/utils/axiosInstance';
 import { API_ENDPOINTS } from '@/utils/apisPaths';
+import axiosInstance from '../../utils/axiosinstance';
 
 const Login = () => {
   const [formData, setFormData] = useState({ email: '', password: '' });
