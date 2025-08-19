@@ -10,7 +10,7 @@ import {
 } from '@/utils/helper';
 import { UserContext } from '@/context/userContext';
 import { API_ENDPOINTS } from '@/utils/apisPaths';
-import axiosInstance from '../../utils/axiosinstance';
+import axiosInstance from '@/utils/axiosInstance';
 
 const Login = () => {
   const [formData, setFormData] = useState({ email: '', password: '' });
