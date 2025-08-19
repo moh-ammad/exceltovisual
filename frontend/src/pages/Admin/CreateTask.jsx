@@ -1,5 +1,5 @@
 import { useContext, useEffect, useState } from 'react';
-import { API_ENDPOINTS } from '@/utils/apisPaths.js';
+import { API_ENDPOINTS } from '@/utils/apisPaths';
 import { toast } from 'react-hot-toast';
 import UserSelection from '@/createtasks/UserSelection';
 import AttachmentList from '@/createtasks/AttachmentList';
@@ -8,8 +8,8 @@ import { UserRoundPlus } from 'lucide-react';
 import UserAvatar from '@/createtasks/Useravatar';
 import { useNavigate } from 'react-router-dom';
 import { UserContext } from '@/context/userContext';
-import { showError, showSuccess } from '@/utils/helper.js';
-import axiosInstance from '@/utils/axiosInstance.js';
+import { showError, showSuccess } from '@/utils/helper';
+import axiosInstance from '@/utils/axiosInstance';
 
 const CreateTask = () => {
   const [users, setUsers] = useState([]);

@@ -7,9 +7,9 @@ import {
   validatePassword,
   showError,
   showSuccess,
-} from "@/utils/helper.js";
-import { API_ENDPOINTS } from "@/utils/apisPaths.js";
-import axiosInstance from "@/utils/axiosInstance.js";
+} from "@/utils/helper";
+import { API_ENDPOINTS } from "@/utils/apisPaths";
+import axiosInstance from "@/utils/axiosInstance";
 
 const UpdateUser = () => {
   const { userId } = useParams(); // Admin editing another user
