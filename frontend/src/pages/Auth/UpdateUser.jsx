@@ -48,6 +48,7 @@ const UpdateUser = () => {
         setExistingImageUrl(data.profileImageUrl || null);
         setProfilePic(null); // reset local image on load
       } catch (error) {
+        console.error("Failed to fetch profile:", error);
         showError("Failed to load profile");
       }
     };
