@@ -1,7 +1,7 @@
 import { Download } from 'lucide-react';
-import axiosInstance from '@/utils/axiosInstance.js';
-import { API_ENDPOINTS } from '@/utils/apisPaths.js';
-import { showError } from '@/utils/helper.js';
+import axiosInstance from '@/utils/axiosInstance';
+import { API_ENDPOINTS } from '@/utils/apisPaths';
+import { showError } from '@/utils/helper';
 
 const exportOptions = [
   {
