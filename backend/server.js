@@ -1,3 +1,4 @@
+// server.js
 import express from 'express'
 import cors from 'cors'
 import dotenv from 'dotenv'
@@ -10,22 +11,26 @@ import { userRoutes } from './routes/userRoutes.js'
 import { taskRoutes } from './routes/taskRoutes.js'
 import { reportRoutes } from './routes/reportRoutes.js'
 
-// Load env variables
+// Load environment variables
 dotenv.config()
+
+// Validate required environment variables
+if (!process.env.ADMIN_INVITE_TOKEN) {
+  console.error('❌ Missing ADMIN_INVITE_TOKEN in .env')
+  process.exit(1)
+}
 
 // App setup
 const app = express()
 const PORT = process.env.PORT || 5000
 
-// Get __dirname in ES Modules
+// ES Module __dirname
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
-// Middlewares
+// Middleware
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
-
-// Serve static uploads folder if used
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')))
 
 // ✅ CORS Configuration
@@ -34,7 +39,6 @@ const allowedOrigins = [
   'http://localhost:3000',
 ]
 
-// CORS options object
 const corsOptions = {
   origin: function (origin, callback) {
     if (!origin || allowedOrigins.includes(origin)) {
@@ -49,28 +53,21 @@ const corsOptions = {
   optionsSuccessStatus: 204,
 }
 
-// Enable CORS with options
-
-// Custom middleware to always set Access-Control-Allow-Credentials
+// Always allow credentials
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Credentials', 'true');
-  next();
-});
+  res.header('Access-Control-Allow-Credentials', 'true')
+  next()
+})
 
 app.use(cors(corsOptions))
-
-// ✅ Handle preflight requests
-app.options('*', cors(corsOptions), (req, res) => {
-  res.header('Access-Control-Allow-Credentials', 'true');
-  res.sendStatus(204);
-})
+app.options('*', cors(corsOptions))
 
 // ✅ Connect to DB
 connectTodb()
 
-// Routes
+// ✅ Routes
 app.get('/', (req, res) => {
-  res.send('Backend is running')
+  res.send('✅ Backend is running')
 })
 
 app.use('/api/auth', authRoutes)
@@ -78,7 +75,20 @@ app.use('/api/users', userRoutes)
 app.use('/api/tasks', taskRoutes)
 app.use('/api/reports', reportRoutes)
 
-// Start server
+// ✅ Route Debugging (optional but helpful during crash)
+app._router.stack.forEach((middleware) => {
+  if (middleware.route) {
+    console.log('🛣️  Route:', middleware.route.path)
+  } else if (middleware.name === 'router') {
+    middleware.handle.stack.forEach((handler) => {
+      if (handler.route) {
+        console.log('🛣️  Sub-route:', handler.route.path)
+      }
+    })
+  }
+})
+
+// ✅ Start Server
 app.listen(PORT, () => {
   console.log(`✅ Server running at http://localhost:${PORT}`)
 })
