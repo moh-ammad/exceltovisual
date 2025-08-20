@@ -8,6 +8,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 export default defineConfig({
+  base: "./", // ✅ FIXED: relative path for Netlify
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
