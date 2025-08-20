@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { API_ENDPOINTS } from '@/utils/apisPaths';
-import { showError, showSuccess } from '@/utils/helper';
+import { API_ENDPOINTS } from '@/utils/apisPaths.js';
+import { showError, showSuccess } from '@/utils/helper.js';
 import { Trash2, Edit, User,Download } from 'lucide-react';
 import ConfirmationPopup from '@/createtasks/ConfirmationPopUp';
 import FileSaver from 'file-saver';
-import axiosInstance from '@/utils/axiosInstance';
+import axiosInstance from '@/utils/axiosInstance.js';
 
 const ManageUsers = () => {
   const [users, setUsers] = useState([]);

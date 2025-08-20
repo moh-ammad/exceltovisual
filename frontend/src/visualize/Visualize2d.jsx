@@ -7,9 +7,9 @@ import {
   XAxis, YAxis, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
 import html2canvas from 'html2canvas';
-import axiosInstance from '@/utils/axiosInstance';
+import axiosInstance from '@/utils/axiosInstance.js';
 import CustomTooltip from '@/createtasks/CustomTooltip';
-import { showError, showSuccess } from '@/utils/helper';
+import { showError, showSuccess } from '@/utils/helper.js';
 
 const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']; // Tailwind-themed hex colors
 

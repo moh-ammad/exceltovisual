@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { UploadCloud, X } from 'lucide-react';
-import { showError, showSuccess } from '@/utils/helper';
-import axiosInstance from '@/utils/axiosInstance';
-import { API_ENDPOINTS } from '@/utils/apisPaths';
+import { showError, showSuccess } from '@/utils/helper.js';
+import axiosInstance from '@/utils/axiosInstance.js';
+import { API_ENDPOINTS } from '@/utils/apisPaths.js';
 
 const LOCAL_KEY = 'uploadedExcelFile';
 

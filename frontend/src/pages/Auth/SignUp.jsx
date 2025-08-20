@@ -7,10 +7,10 @@ import {
   showSuccess,
   validateEmail,
   validatePassword,
-} from "@/utils/helper";
+} from "@/utils/helper.js";
 import { useNavigate } from "react-router-dom";
-import axiosInstance from "@/utils/axiosInstance";
-import { API_ENDPOINTS } from "@/utils/apisPaths";
+import axiosInstance from "@/utils/axiosInstance.js";
+import { API_ENDPOINTS } from "@/utils/apisPaths.js";
 
 const SignUp = () => {
   const [formData, setFormData] = useState({

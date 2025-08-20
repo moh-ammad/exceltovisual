@@ -3,9 +3,9 @@ import * as THREE from 'three';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Html } from '@react-three/drei';
 import html2canvas from 'html2canvas';
-import axiosInstance from '@/utils/axiosInstance';
+import axiosInstance from '@/utils/axiosInstance.js';
 import styles from "@/visualize/visualize3d.module.css";
-import { showError, showSuccess } from '@/utils/helper';
+import { showError, showSuccess } from '@/utils/helper.js';
 import CustomTooltip from '@/createtasks/CustomTooltip';
 
 const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];

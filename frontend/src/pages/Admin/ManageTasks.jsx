@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
-import { API_ENDPOINTS } from '@/utils/apisPaths';
+import { API_ENDPOINTS } from '@/utils/apisPaths.js';
 import toast from 'react-hot-toast';
 import { Trash2, Pencil, Download } from 'lucide-react';
 import FileSaver from 'file-saver';
 import { useNavigate } from 'react-router-dom';
 import ConfirmationPopup from '@/createtasks/ConfirmationPopUp';
-import { showError, showSuccess } from '@/utils/helper';
-import axiosInstance from '@/utils/axiosInstance';
+import { showError, showSuccess } from '@/utils/helper.js';
+import axiosInstance from '@/utils/axiosInstance.js';
 
 const ManageTasks = () => {
   const [tasks, setTasks] = useState([]);

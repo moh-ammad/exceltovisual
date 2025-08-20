@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import Visualize2d from './Visualize2d';
 import Visualize3d from './Visualize3d';
-import axiosInstance from '@/utils/axiosInstance';
-import { API_ENDPOINTS } from '@/utils/apisPaths';
+import axiosInstance from '@/utils/axiosInstance.js';
+import { API_ENDPOINTS } from '@/utils/apisPaths.js';
 
 const StatusBadge = ({ label, value, color }) => {
   const colorMap = {
