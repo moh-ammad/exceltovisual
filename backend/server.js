@@ -50,10 +50,20 @@ const corsOptions = {
 }
 
 // Enable CORS with options
+
+// Custom middleware to always set Access-Control-Allow-Credentials
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Credentials', 'true');
+  next();
+});
+
 app.use(cors(corsOptions))
 
 // ✅ Handle preflight requests
-app.options('*', cors(corsOptions))
+app.options('*', cors(corsOptions), (req, res) => {
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.sendStatus(204);
+})
 
 // ✅ Connect to DB
 connectTodb()
