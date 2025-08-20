@@ -14,7 +14,6 @@ import SignUp from '@/pages/Auth/SignUp';
 import ManageUsers from '@/pages/Admin/ManageUsers';
 import ManageTasks from '@/pages/Admin/ManageTasks';
 import CreateTask from '@/pages/Admin/CreateTask';
-import Dashboard from '@/pages/Admin/Dashboard';
 
 import UserDashboard from '@/pages/users/UserDashboard';
 import MyTasks from '@/pages/users/MyTasks';
@@ -32,6 +31,7 @@ import UpdateTask from '@/pages/Admin/UpdateTask';
 
 import Visualize2d from "@/visualize/Visualize2d"
 import Visualize3d from '@/visualize/Visualize3d';
+import Dashboard from '@/visualize/Dashboard';
 
 const App = () => {
   return (

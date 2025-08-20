@@ -4,7 +4,7 @@ import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Html } from '@react-three/drei';
 import html2canvas from 'html2canvas';
 import axiosInstance from '@/utils/axiosInstance';
-import styles from './Visualize3d.module.css';
+import styles from "@/visualize/visualize3d.module.css";
 import { showError, showSuccess } from '@/utils/helper';
 import CustomTooltip from '@/createtasks/CustomTooltip';
 
@@ -142,18 +142,80 @@ const Visualize3d = () => {
   const lineData = Object.entries(priorityCount).map(([name, value]) => ({ name, value }));
   const maxPriority = Math.max(...lineData.map(d => d.value), 1);
 
-  // Download handler using html2canvas
+  // Improved download handler: composite WebGL canvases (r3f) and DOM overlays
+  // into a single image. html2canvas alone can't capture WebGL canvas content.
   const handleDownload = async (format = 'png') => {
     if (!chartRef.current) return;
     try {
-      const canvas = await html2canvas(chartRef.current, {
-        backgroundColor: '#1f2937',
-        useCORS: true,
-        scale: 2,
-      });
+      const container = chartRef.current;
+      const rect = container.getBoundingClientRect();
+      const scale = 2; // export at higher resolution
+
+      // Create export canvas
+      const exportCanvas = document.createElement('canvas');
+      exportCanvas.width = Math.round(rect.width * scale);
+      exportCanvas.height = Math.round(rect.height * scale);
+      const ctx = exportCanvas.getContext('2d');
+
+      // Fill background
+      ctx.fillStyle = '#1f2937';
+      ctx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
+
+      // 1) Capture DOM overlays (non-canvas elements) by cloning the container
+      // and running html2canvas on the clone with canvases removed.
+      let domCanvas = null;
+      try {
+        const clone = container.cloneNode(true);
+        // Remove canvas elements from the clone so html2canvas only captures DOM
+        clone.querySelectorAll && clone.querySelectorAll('canvas').forEach(n => n.remove());
+        // Place clone offscreen so styles still apply
+        clone.style.position = 'absolute';
+        clone.style.left = '-99999px';
+        document.body.appendChild(clone);
+        domCanvas = await html2canvas(clone, { backgroundColor: null, useCORS: true, scale });
+        document.body.removeChild(clone);
+      } catch (e) {
+        // If html2canvas fails for DOM overlays, continue — we still can capture WebGL
+        console.warn('html2canvas overlay capture failed:', e);
+        domCanvas = null;
+      }
+
+      // Draw DOM overlay (if any) as base layer
+      if (domCanvas) {
+        ctx.drawImage(domCanvas, 0, 0, exportCanvas.width, exportCanvas.height);
+      }
+
+      // 2) Capture all canvas elements inside the container (react-three-fiber canvases)
+      const canvases = Array.from(container.querySelectorAll('canvas'));
+      for (const c of canvases) {
+        try {
+          // Get canvas bounding box relative to container
+          const cRect = c.getBoundingClientRect();
+          const x = Math.round((cRect.left - rect.left) * scale);
+          const y = Math.round((cRect.top - rect.top) * scale);
+          const w = Math.round(cRect.width * scale);
+          const h = Math.round(cRect.height * scale);
+
+          // Prefer to use the canvas's own pixel buffer if available
+          const dataUrl = c.toDataURL(`image/${format}`);
+          await new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => {
+              ctx.drawImage(img, x, y, w, h);
+              resolve();
+            };
+            img.onerror = reject;
+            img.src = dataUrl;
+          });
+        } catch (err) {
+          console.warn('Failed to draw canvas during export', err);
+        }
+      }
+
+      // Finalize export
       const link = document.createElement('a');
       link.download = `dashboard3d.${format}`;
-      link.href = canvas.toDataURL(`image/${format}`);
+      link.href = exportCanvas.toDataURL(`image/${format}`);
       link.click();
       showSuccess('3D Dashboard downloaded!');
     } catch (err) {
@@ -170,7 +232,7 @@ const Visualize3d = () => {
         {/* Bar Chart */}
         <div className={styles.chartBox}>
           <h4 className={styles.chartTitle}>Tasks by User (3D Bar)</h4>
-          <Canvas camera={{ position: [0, 10, 15], fov: 50 }}>
+          <Canvas camera={{ position: [0, 10, 15], fov: 50 }} gl={{ preserveDrawingBuffer: true }}>
             <ambientLight intensity={0.4} />
             <directionalLight position={[0, 10, 5]} intensity={0.8} />
             <OrbitControls />
@@ -202,7 +264,7 @@ const Visualize3d = () => {
         {/* Pie Chart */}
         <div className={styles.chartBox}>
           <h4 className={styles.chartTitle}>Tasks by Status (3D Pie)</h4>
-          <Canvas camera={{ position: [0, 8, 12], fov: 50 }}>
+          <Canvas camera={{ position: [0, 8, 12], fov: 50 }} gl={{ preserveDrawingBuffer: true }}>
             <ambientLight intensity={0.6} />
             <directionalLight position={[0, 10, 5]} intensity={0.8} />
             <OrbitControls />
@@ -247,7 +309,7 @@ const Visualize3d = () => {
         {/* Line Chart */}
         <div className={styles.chartBox}>
           <h4 className={styles.chartTitle}>Tasks by Priority (3D Line)</h4>
-          <Canvas camera={{ position: [0, 8, 15], fov: 50 }}>
+          <Canvas camera={{ position: [0, 8, 15], fov: 50 }} gl={{ preserveDrawingBuffer: true }}>
             <ambientLight intensity={0.4} />
             <directionalLight position={[0, 10, 5]} intensity={0.8} />
             <OrbitControls />
