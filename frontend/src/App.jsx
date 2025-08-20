@@ -3,16 +3,16 @@ import {
   Routes,
   Route
 } from 'react-router-dom'
-import Login from './pages/Auth/Login'
-import SignUp from './pages/Auth/SignUp'
-import ManageUsers from './pages/Admin/ManageUsers'
-import ManageTasks from './pages/Admin/ManageTasks'
-import CreateTask from './pages/Admin/CreateTask'
-import Dashboard from './pages/Admin/Dashboard'
-import UserDashboard from './pages/users/UserDashboard'
-import MyTasks from './pages/users/MyTasks'
-import PrivateRoute from './routes/PrivateRoute'
-import ViewTaskDetails from './pages/users/ViewtaskDetails'
+import Login from '@/pages/Auth/Login'
+import SignUp from '@/pages/Auth/SignUp'
+import ManageUsers from '@/pages/Admin/ManageUsers'
+import ManageTasks from '@/pages/Admin/ManageTasks'
+import CreateTask from '@/pages/Admin/CreateTask'
+import Dashboard from '@/pages/Admin/Dashboard'
+import UserDashboard from '@/pages/users/UserDashboard'
+import MyTasks from '@/pages/users/MyTasks'
+import PrivateRoute from '@/routes/PrivateRoute'
+import ViewTaskDetails from '@/pages/users/ViewtaskDetails'
 const App = () => {
   
   return (
