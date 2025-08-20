@@ -39,6 +39,35 @@ app.use(cors({
   exposedHeaders: ['Set-Cookie']
 }));
 
+// Extra headers & OPTIONS handler - make preflight explicit and robust for CDNs/proxies
+app.use((req, res, next) => {
+  const allowedOrigins = [
+    'http://localhost:3000',
+    'http://localhost:5173',
+    'http://localhost:5000',
+    'https://exceltovisual.netlify.app'
+  ];
+
+  const origin = req.headers.origin;
+  // Log origin for debugging (comment out in production if noisy)
+  console.log('[CORS] incoming origin ->', origin);
+
+  if (origin && allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
+
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
+
+  if (req.method === 'OPTIONS') {
+    // short-circuit preflight requests
+    return res.sendStatus(204);
+  }
+
+  next();
+});
+
 connectTodb()
 app.get('/', (req, res) => {
   res.send('Backend is running');
