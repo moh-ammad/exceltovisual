@@ -78,95 +78,70 @@
 // app.listen(PORT, () => {
 //   console.log(`Server running on http://localhost:${PORT}`)
 // })
+import express from 'express'
+import cors from 'cors'
+import dotenv from 'dotenv'
+import path from 'path'
+import { fileURLToPath } from 'url'
 
-import express from 'express';
-import cors from 'cors';
-import dotenv from 'dotenv';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import connectTodb from './config/db.js'
+import { authRoutes } from './routes/authRoutes.js'
+import { userRoutes } from './routes/userRoutes.js'
+import { taskRoutes } from './routes/taskRoutes.js'
+import { reportRoutes } from './routes/reportRoutes.js'
 
-import connectTodb from './config/db.js';
-import { authRoutes } from './routes/authRoutes.js';
-import { userRoutes } from './routes/userRoutes.js';
-import { taskRoutes } from './routes/taskRoutes.js';
-import { reportRoutes } from './routes/reportRoutes.js';
+dotenv.config()
 
-dotenv.config();
-
-const PORT = process.env.PORT || 5000;
-const app = express();
+const PORT = process.env.PORT || 5000
+const app = express()
 
 // ✅ Trust proxy (needed for platforms like Render)
-app.set('trust proxy', 1);
+app.set('trust proxy', 1)
 
-// ✅ Define allowed origins
-const allowedOrigins = [
-  'http://localhost:3000',
-  'https://exceltovisual.netlify.app',
-];
+// ✅ TEMP: Allow all origins (for testing only — not for production)
+app.use(cors({
+  origin: '*', // Allow all origins
+}))
 
-// ✅ CORS middleware with logging for debugging
-const corsOptions = {
-  origin: (origin, callback) => {
-    if (!origin) {
-      // Allow requests with no origin (e.g., Postman, curl)
-      callback(null, true);
-    } else if (allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      console.error(`CORS blocked for origin: ${origin}`);
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true, // Allow cookies/auth headers
-  optionsSuccessStatus: 200, // For legacy browsers (IE11, SmartTVs)
-};
+// ✅ Body parsing middleware
+app.use(express.json())
+app.use(express.urlencoded({ extended: true }))
 
-app.use(cors(corsOptions));
+// ✅ Static files
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')))
 
-// Explicitly handle OPTIONS preflight requests for all routes
-app.options('*', cors(corsOptions));
+// ✅ Connect to MongoDB
+connectTodb()
 
-// Body parsing middleware
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-// Static files
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
-// Connect to MongoDB
-connectTodb();
-
-// Routes
+// ✅ Routes
 app.get('/', (req, res) => {
-  res.send('Backend is running');
-});
+  res.send('Backend is running')
+})
 
-app.use('/api/auth', authRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/tasks', taskRoutes);
-app.use('/api/reports', reportRoutes);
+app.use('/api/auth', authRoutes)
+app.use('/api/users', userRoutes)
+app.use('/api/tasks', taskRoutes)
+app.use('/api/reports', reportRoutes)
 
-// Test CORS route (Optional: for debugging)
+// ✅ Optional CORS Test Route
 app.get('/api/test-cors', (req, res) => {
-  res.json({ message: 'CORS is working!', origin: req.headers.origin });
-});
+  res.json({ message: 'CORS is working!', origin: req.headers.origin })
+})
 
-// Error listeners
+// ✅ Error listeners
 process.on('unhandledRejection', (err) => {
-  console.error('Unhandled Rejection:', err.message);
-  process.exit(1);
-});
+  console.error('Unhandled Rejection:', err.message)
+  process.exit(1)
+})
 
 process.on('uncaughtException', (err) => {
-  console.error('Uncaught Exception:', err.message);
-  process.exit(1);
-});
+  console.error('Uncaught Exception:', err.message)
+  process.exit(1)
+})
 
-// Start server
+// ✅ Start server
 app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-});
-
+  console.log(`Server running on port ${PORT}`)
+})
