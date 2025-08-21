@@ -24,22 +24,6 @@ const allowedOrigins = [
   'https://exceltocharts.vercel.app',   // <-- Your deployed frontend URL (use https)
 ]
 
-// CORS middleware
-app.use(cors({
-  origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true)
-    } else {
-      callback(new Error('Not allowed by CORS'))
-    }
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-  exposedHeaders: ['Content-Disposition'],
-  preflightContinue: false,
-  optionsSuccessStatus: 204,
-}))
 
 
 // Body parsers
@@ -63,6 +47,24 @@ app.use('/api/auth', authRoutes)
 app.use('/api/users', userRoutes)
 app.use('/api/tasks', taskRoutes)
 app.use('/api/reports', reportRoutes)
+
+
+// CORS middleware
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true)
+    } else {
+      callback(new Error('Not allowed by CORS'))
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  exposedHeaders: ['Content-Disposition'],
+  preflightContinue: false,
+  optionsSuccessStatus: 204,
+}))
 
 // CORS test route (optional)
 app.get('/api/test-cors', (req, res) => {
