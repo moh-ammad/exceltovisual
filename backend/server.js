@@ -1,46 +1,46 @@
-// server.js
+import express from 'express'
+import cors from 'cors'
+import dotenv from 'dotenv'
+import path from 'path'
+import { fileURLToPath } from 'url'
 
-
-import express from 'express';
-import cors from 'cors';
-import dotenv from 'dotenv';
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-
-
-import connectTodb from './config/db.js';
-import { authRoutes } from './routes/authRoutes.js';
-import { userRoutes } from './routes/userRoutes.js';
-import { taskRoutes } from './routes/taskRoutes.js';
-import { reportRoutes } from './routes/reportRoutes.js';
+import connectTodb from './config/db.js'
+import { authRoutes } from './routes/authRoutes.js'
+import { userRoutes } from './routes/userRoutes.js'
+import { taskRoutes } from './routes/taskRoutes.js'
+import { reportRoutes } from './routes/reportRoutes.js'
 
 dotenv.config()
 
 const PORT = process.env.PORT || 5000
 const app = express()
 
-// Secure CORS for cross-origin cookie auth (Render + Netlify)
+// ✅ Trust proxy (needed for platforms like Render)
+app.set('trust proxy', 1)
+
+// ✅ Define allowed origins
 const allowedOrigins = [
   'http://localhost:3000',
   'https://exceltovisual.netlify.app',
 ]
 
+// ✅ CORS middleware
 app.use(cors({
   origin: (origin, callback) => {
     if (!origin || allowedOrigins.includes(origin)) {
-      return callback(null, true)
+      callback(null, true)
     } else {
-      return callback(new Error('Not allowed by CORS'))
+      callback(new Error('Not allowed by CORS'))
     }
   },
   credentials: true,
 }))
 
+// Body parsing middleware
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
-// Static file serving
+// Static files
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')))
@@ -52,16 +52,23 @@ connectTodb()
 app.get('/', (req, res) => {
   res.send('Backend is running')
 })
+
 app.use('/api/auth', authRoutes)
 app.use('/api/users', userRoutes)
 app.use('/api/tasks', taskRoutes)
 app.use('/api/reports', reportRoutes)
 
-// Global error listeners (recommended in prod)
+// Test CORS route (Optional: for debugging)
+app.get('/api/test-cors', (req, res) => {
+  res.json({ message: 'CORS is working!', origin: req.headers.origin })
+})
+
+// Error listeners
 process.on('unhandledRejection', (err) => {
   console.error('Unhandled Rejection:', err.message)
   process.exit(1)
 })
+
 process.on('uncaughtException', (err) => {
   console.error('Uncaught Exception:', err.message)
   process.exit(1)
