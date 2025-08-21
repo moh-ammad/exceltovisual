@@ -1,7 +1,7 @@
 import express from 'express'
 import cors from 'cors'
 import dotenv from 'dotenv'
-import path from 'path'  
+import path from 'path'
 import { fileURLToPath } from 'url'
 
 import connectTodb from './config/db.js'
@@ -15,75 +15,58 @@ dotenv.config()
 const PORT = process.env.PORT || 5000
 const app = express()
 
-// Get __dirname in ES module
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
+// Trust proxy if behind one (e.g., Vercel)
+app.set('trust proxy', 1)
 
-// ✅ CORS Configuration
+// Allowed origins for CORS
 const allowedOrigins = [
   'http://localhost:3000',
-  'https://exceltovisual.netlify.app'
+  'https://exceltocharts.vercel.app',   // <-- Your deployed frontend URL (use https)
 ]
 
+// CORS middleware
 app.use(cors({
-  origin: function (origin, callback) {
-    // Allow requests with no origin (e.g. mobile apps or curl)
-    if (!origin) return callback(null, true)
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true)
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true)
     } else {
-      return callback(new Error('Not allowed by CORS'))
+      callback(new Error('Not allowed by CORS'))
     }
   },
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true,
 }))
 
-// ✅ Handle preflight requests
-app.options('*', cors({
-  origin: allowedOrigins,
-  credentials: true
-}))
-
-// ✅ (Optional) Set headers manually for extra protection
-app.use((req, res, next) => {
-  const origin = req.headers.origin
-  if (allowedOrigins.includes(origin)) {
-    res.setHeader('Access-Control-Allow-Origin', origin)
-  }
-  res.header('Access-Control-Allow-Credentials', 'true')
-  res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS')
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization')
-  next()
-})
-
-// ✅ Body parsers
+// Body parsers
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
-// ✅ Static folder for uploads
+// Serve static uploads folder
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')))
 
-// ✅ Connect to DB
+// Connect to MongoDB
 connectTodb()
 
-// ✅ Routes
+// Routes
 app.get('/', (req, res) => {
   res.send('Backend is running')
 })
 
-// Test CORS route
-app.get('/api/test-cors', (req, res) => {
-  res.json({ message: 'CORS is working!', origin: req.headers.origin })
-})
-
-// API Routes
 app.use('/api/auth', authRoutes)
 app.use('/api/users', userRoutes)
 app.use('/api/tasks', taskRoutes)
 app.use('/api/reports', reportRoutes)
 
-// ✅ Start server
+// CORS test route (optional)
+app.get('/api/test-cors', (req, res) => {
+  res.json({ message: 'CORS is working!', origin: req.headers.origin })
+})
+
+// Start server
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`)
 })
+
+
