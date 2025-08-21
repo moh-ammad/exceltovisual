@@ -21,7 +21,7 @@ app.set('trust proxy', 1)
 // Allowed origins for CORS
 const allowedOrigins = [
   'http://localhost:3000',
-  'https://exceltocharts.vercel.app',   // <-- Your deployed frontend URL (use https)
+  "https://exceltovisual.netlify.app"
 ]
 
 // CORS middleware
