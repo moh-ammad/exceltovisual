@@ -15,12 +15,16 @@ dotenv.config()
 const PORT = process.env.PORT || 5000
 const app = express()
 
-// Trust proxy if behind one (e.g., Render, Heroku)
+// Trust proxy if behind one (e.g., Vercel)
 app.set('trust proxy', 1)
 
-// Allow CORS only from localhost:3000 for now
-const allowedOrigins = ['http://localhost:3000']
+// Allowed origins for CORS
+const allowedOrigins = [
+  'http://localhost:3000',
+  'https://exceltocharts.vercel.app',   // <-- Your deployed frontend URL (use https)
+]
 
+// CORS middleware
 app.use(cors({
   origin: (origin, callback) => {
     if (!origin || allowedOrigins.includes(origin)) {
