@@ -27,7 +27,7 @@ const ManageTasks = () => {
       const { data } = await axiosInstance.get(API_ENDPOINTS.TASKS.GET_ALL_TASKS);
 
       // Debug log
-      console.log("Fetched tasks:", data.tasks.map(t => t._id));
+      // console.log("Fetched tasks:", data.tasks.map(t => t._id));
 
       // Remove duplicates by task ID (in case backend is duplicating)
       const uniqueTasks = Array.from(
