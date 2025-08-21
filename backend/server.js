@@ -1,7 +1,7 @@
 import express from 'express'
 import cors from 'cors'
 import dotenv from 'dotenv'
-import path from 'path'
+import path from 'path'  
 import { fileURLToPath } from 'url'
 
 import connectTodb from './config/db.js'
@@ -12,34 +12,39 @@ import { reportRoutes } from './routes/reportRoutes.js'
 
 dotenv.config()
 
+const PORT = process.env.PORT || 5000
 const app = express()
-
-// Connect to MongoDB
-connectTodb()
 
 // CORS middleware
 app.use(cors({
-  origin: [
-    'http://localhost:3000',
-    'https://exceltocharts.vercel.app',
-  ],
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  origin:[
+  'http://localhost:3000',
+] ,
+methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   credentials: true,
 }))
+
+
 
 // Body parsers
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
-// Serving static uploads folder will NOT work on Vercel
-// You must use a cloud storage solution like AWS S3 or Cloudinary.
+// Serve static uploads folder
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')))
 
+// Connect to MongoDB
+connectTodb()
+
 // Routes
 app.get('/', (req, res) => {
   res.send('Backend is running')
+})
+// CORS test route (optional)
+app.get('/api/test-cors', (req, res) => {
+  res.json({ message: 'CORS is working!', origin: req.headers.origin })
 })
 
 app.use('/api/auth', authRoutes)
@@ -47,12 +52,16 @@ app.use('/api/users', userRoutes)
 app.use('/api/tasks', taskRoutes)
 app.use('/api/reports', reportRoutes)
 
-// Export the app instance for Vercel to use as a serverless function
-export default app
+// Start server
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`)
+})
 
-// Remove the following lines as they are for a traditional server
-// app.listen(PORT, () => {
-//   console.log(`Server running on http://localhost:${PORT}`)
-// })
-// process.on('unhandledRejection', ...)
-// process.on('uncaughtException', ...)
+
+
+
+
+
+
+
+

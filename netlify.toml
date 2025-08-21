@@ -1,0 +1,13 @@
+[build]
+  base    = "frontend"     # Netlify will cd into this folder
+  command = "yarn build"
+  publish = "dist"         # Relative to base, so effective path is frontend/dist
+
+[build.environment]
+  NODE_VERSION     = "22"
+  NETLIFY_USE_YARN = "true"
+
+[[redirects]]
+  from   = "/*"
+  to     = "/index.html"
+  status = 200
