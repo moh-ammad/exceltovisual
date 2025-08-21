@@ -35,7 +35,12 @@ app.use(cors({
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  exposedHeaders: ['Content-Disposition'],
+  preflightContinue: false,
+  optionsSuccessStatus: 204,
 }))
+
 
 // Body parsers
 app.use(express.json())
@@ -76,9 +81,9 @@ process.on('uncaughtException', (err) => {
 })
 
 // Start server
-// app.listen(PORT, () => {
-//   console.log(`Server running on http://localhost:${PORT}`)
-// })
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`)
+})
 
-export default app;
+
 
