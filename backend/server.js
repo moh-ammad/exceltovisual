@@ -1,8 +1,6 @@
 import express from 'express'
 import cors from 'cors'
 import helmet from 'helmet'
-
-
 import dotenv from 'dotenv'
 import path from 'path'
 import { fileURLToPath } from 'url'
@@ -18,73 +16,68 @@ dotenv.config()
 const PORT = process.env.PORT || 5000
 const app = express()
 
+// ✅ Allowed origins for CORS
+const allowedOrigins = [
+  process.env.CLIENT_URL,           // Frontend in prod
+  'http://localhost:3000',          // Local dev
+]
 
-// // Allowed origins for CORS
-// const allowedOrigins = [
-//   'http://localhost:3000',
-//   "https://exceltovisual.netlify.app"
-// ]
-
-// CORS middleware
-// origin: (origin, callback) => {
-//   if (!origin || allowedOrigins.includes(origin)) {
-//     callback(null, true)
-//   } else {
-//     callback(new Error('Not allowed by CORS'))
-//   }
-// },
 // CORS middleware
 app.use(cors({
-  origin: process.env.CLIENT_URL || '*',
+  // origin: (origin, callback) => {
+  //   if (!origin || allowedOrigins.includes(origin)) {
+  //     callback(null, true)
+  //   } else {
+  //     callback(new Error('Not allowed by CORS'))
+  //   }
+  // },
+  origin:process.env.CLIENT_URL||"*",
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true,
-}));
+}))
 
-// Preflight handler
-app.options('*', cors());
+// ❌ REMOVE THIS — causes your error
+// app.options('/*', cors())
 
-
+// ✅ Helmet setup
 if (process.env.NODE_ENV === 'production') {
-  app.use(helmet()) // Full protection in production
+  app.use(helmet()) // Full protection
 } else {
   app.use(
     helmet({
-      contentSecurityPolicy: false // Relax CSP during development
+      contentSecurityPolicy: false // Relaxed for dev
     })
   )
 }
 
-// Body parsers
+// ✅ Body parsing
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
-// Serve static uploads folder
+// ✅ Static uploads path
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')))
 
-// Connect to MongoDB
+// ✅ Connect to DB
 connectTodb()
 
-// Routes
-app.get('/', (req, res) => {
-  res.send('Backend is running')
-})
+// ✅ Routes
+app.get('/', (req, res) => res.send('Backend is running'))
 
 app.use('/api/auth', authRoutes)
 app.use('/api/users', userRoutes)
 app.use('/api/tasks', taskRoutes)
 app.use('/api/reports', reportRoutes)
 
-// CORS test route (optional)
+// ✅ CORS test route (optional)
 app.get('/api/test-cors', (req, res) => {
   res.json({ message: 'CORS is working!', origin: req.headers.origin })
 })
 
-// Start server
+// ✅ Start server
 app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`)
+  console.log(`Server running on port ${PORT}`)
 })
-
-
