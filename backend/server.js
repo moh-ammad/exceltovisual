@@ -15,8 +15,7 @@ dotenv.config()
 const PORT = process.env.PORT || 5000
 const app = express()
 
-// Trust proxy if behind one (e.g., Vercel)
-app.set('trust proxy', 1)
+
 
 // Allowed origins for CORS
 const allowedOrigins = [
