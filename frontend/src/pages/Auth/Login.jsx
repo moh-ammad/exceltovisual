@@ -39,6 +39,7 @@ const Login = () => {
     setLoading(true);
     try {
       const { data } = await axiosInstance.post(API_ENDPOINTS.AUTH.LOGIN, formData);
+      console.log(data);
       const { token, user } = data || {};
       if (!user) throw new Error('Missing user data');
       updateUser(token ? { ...user, token } : user);

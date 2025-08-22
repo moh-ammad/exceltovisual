@@ -17,6 +17,7 @@ const registerUser = async (req, res) => {
   try {
     let originalImageUrl;
     const { fullName, email, password, role, adminKey } = req.body;
+    console.log(req.body)
 
     if (!fullName || !email || !password) {
       return res.status(400).json({ message: "Please fill all fields" });
@@ -80,6 +81,7 @@ const registerUser = async (req, res) => {
 const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
+    console.log(req.body);
 
     if (!email || !password) {
       return res.status(400).json({ message: "Please fill all fields" });
