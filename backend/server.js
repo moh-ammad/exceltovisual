@@ -32,10 +32,12 @@ const corsOptions = {
 
 app.use(cors(corsOptions))
 
-// Explicit OPTIONS handlers to ensure preflight success
-['/api/auth', '/api/users', '/api/tasks', '/api/reports'].forEach(route => {
-  app.options(route, cors(corsOptions))
-})
+const routes = ['/api/auth', '/api/users', '/api/tasks', '/api/reports'];
+
+routes.forEach(route => {
+  app.options(route, cors(corsOptions));
+});
+
 
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
