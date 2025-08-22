@@ -38,7 +38,8 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 // Universal preflight handler
-app.options('/*splat', cors(corsOptions))
+app.options('/{*splat}', cors(corsOptions));
+
 
 
 app.use(express.json());
