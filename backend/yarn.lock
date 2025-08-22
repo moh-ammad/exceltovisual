@@ -834,6 +834,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"helmet@npm:^8.1.0":
+  version: 8.1.0
+  resolution: "helmet@npm:8.1.0"
+  checksum: 10c0/94d3a7ebc88dbda1421635bdf33f00724adb5252269e93c5ab296ec0db11336d01265659ad3739ab1a1e881fb23a686ff7e788aac6a5fb929285134f157df763
+  languageName: node
+  linkType: hard
+
 "http-cache-semantics@npm:^4.1.1":
   version: 4.2.0
   resolution: "http-cache-semantics@npm:4.2.0"
@@ -1967,6 +1974,7 @@ __metadata:
     cors: "npm:^2.8.5"
     dotenv: "npm:^17.2.1"
     express: "npm:^5.1.0"
+    helmet: "npm:^8.1.0"
     jsonwebtoken: "npm:^9.0.2"
     mongoose: "npm:^8.16.5"
     multer: "npm:^2.0.2"

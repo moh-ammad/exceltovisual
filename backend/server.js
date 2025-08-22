@@ -1,5 +1,8 @@
 import express from 'express'
 import cors from 'cors'
+import helmet from 'helmet'
+
+
 import dotenv from 'dotenv'
 import path from 'path'
 import { fileURLToPath } from 'url'
@@ -16,25 +19,35 @@ const PORT = process.env.PORT || 5000
 const app = express()
 
 
-
-// Allowed origins for CORS
-const allowedOrigins = [
-  'http://localhost:3000',
-  "https://exceltovisual.netlify.app"
-]
+// // Allowed origins for CORS
+// const allowedOrigins = [
+//   'http://localhost:3000',
+//   "https://exceltovisual.netlify.app"
+// ]
 
 // CORS middleware
 app.use(cors({
-  origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true)
-    } else {
-      callback(new Error('Not allowed by CORS'))
-    }
-  },
+  // origin: (origin, callback) => {
+  //   if (!origin || allowedOrigins.includes(origin)) {
+  //     callback(null, true)
+  //   } else {
+  //     callback(new Error('Not allowed by CORS'))
+  //   }
+  // },
+  origin:process.env.CLIENT_URL||"*",
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true,
 }))
+
+if (process.env.NODE_ENV === 'production') {
+  app.use(helmet()) // Full protection in production
+} else {
+  app.use(
+    helmet({
+      contentSecurityPolicy: false // Relax CSP during development
+    })
+  )
+}
 
 // Body parsers
 app.use(express.json())
