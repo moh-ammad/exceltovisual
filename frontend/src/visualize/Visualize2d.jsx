@@ -8,10 +8,11 @@ import {
 } from 'recharts';
 import html2canvas from 'html2canvas';
 import axiosInstance from '@/utils/axiosInstance';
+import { API_ENDPOINTS } from '@/utils/apisPaths';
 import CustomTooltip from '@/createtasks/CustomTooltip';
 import { showError, showSuccess } from '@/utils/helper';
 
-const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']; // Tailwind-themed hex colors
+const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
 const Visualize2d = () => {
   const [users, setUsers] = useState([]);
@@ -21,8 +22,8 @@ const Visualize2d = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const usersRes = await axiosInstance.get('/users');
-        const tasksRes = await axiosInstance.get('/tasks');
+        const usersRes = await axiosInstance.get(API_ENDPOINTS.USERS.GET_ALL_USERS);
+        const tasksRes = await axiosInstance.get(API_ENDPOINTS.TASKS.GET_ALL_TASKS);
         setUsers(Array.isArray(usersRes.data) ? usersRes.data : []);
         setTasks(Array.isArray(tasksRes.data) ? tasksRes.data : []);
       } catch {
@@ -33,7 +34,6 @@ const Visualize2d = () => {
     fetchData();
   }, []);
 
-  // Helpers to count tasks by different categories
   const getUsersTaskCount = () => {
     const countMap = {};
     users.forEach(user => {
@@ -63,15 +63,12 @@ const Visualize2d = () => {
     return Object.entries(statusCount).map(([name, value]) => ({ name, value }));
   };
 
-  // Download handler with format option and success/error toast notifications
   const handleDownload = async (format = 'png') => {
     if (!chartRef.current) return;
 
     try {
-      // no oklch sanitize needed since no oklch colors used
-
       const canvas = await html2canvas(chartRef.current, {
-        backgroundColor: '#1f2937', // Tailwind gray-800 background
+        backgroundColor: '#1f2937',
         useCORS: true,
         scale: 2,
       });
@@ -94,9 +91,9 @@ const Visualize2d = () => {
 
       <div ref={chartRef} className={styles.chartWrapper}>
         {/* Bar Chart - Tasks by User */}
-        <div className={styles.card}>
+        <div className={`${styles.card} ${styles.chartContainer}`}>
           <h4 className={styles.cardTitle}>Tasks by User</h4>
-          <ResponsiveContainer width="100%" height={300}>
+          <ResponsiveContainer width="99%" height="100%">
             <BarChart data={getUsersTaskCount()}>
               <XAxis dataKey="name" stroke="#9ca3af" tick={{ fontSize: 14 }} />
               <YAxis stroke="#9ca3af" tick={{ fontSize: 14 }} allowDecimals={false} />
@@ -111,9 +108,9 @@ const Visualize2d = () => {
         </div>
 
         {/* Pie Chart - Tasks by Status */}
-        <div className={styles.card}>
+        <div className={`${styles.card} ${styles.chartContainer}`}>
           <h4 className={styles.cardTitle}>Tasks by Status</h4>
-          <ResponsiveContainer width="100%" height={300}>
+          <ResponsiveContainer width="99%" height="100%">
             <PieChart>
               {(() => {
                 const statusData = getStatusCount();
@@ -145,7 +142,7 @@ const Visualize2d = () => {
                       {pieData.map((entry, index) => (
                         <Cell
                           key={`cell-${index}`}
-                          fill={hasData ? COLORS[index % COLORS.length] : '#374151'} // Gray fallback
+                          fill={hasData ? COLORS[index % COLORS.length] : '#374151'}
                         />
                       ))}
                     </Pie>
@@ -178,9 +175,9 @@ const Visualize2d = () => {
         </div>
 
         {/* Line Chart - Tasks by Priority */}
-        <div className={styles.card}>
+        <div className={`${styles.card} ${styles.chartContainer}`}>
           <h4 className={styles.cardTitle}>Tasks by Priority</h4>
-          <ResponsiveContainer width="100%" height={300}>
+          <ResponsiveContainer width="99%" height="100%">
             <LineChart data={getPriorityCount()}>
               <XAxis dataKey="name" stroke="#9ca3af" tick={{ fontSize: 14 }} />
               <YAxis stroke="#9ca3af" tick={{ fontSize: 14 }} allowDecimals={false} />
@@ -202,24 +199,14 @@ const Visualize2d = () => {
         </div>
       </div>
 
-      {/* Download Buttons */}
       <div className={styles.buttonGroup}>
-        <button
-          onClick={() => handleDownload('png')}
-          className={`${styles.button} ${styles.btnIndigo}`}
-        >
+        <button onClick={() => handleDownload('png')} className={`${styles.button} ${styles.btnIndigo}`}>
           Download PNG
         </button>
-        <button
-          onClick={() => handleDownload('jpeg')}
-          className={`${styles.button} ${styles.btnGreen}`}
-        >
+        <button onClick={() => handleDownload('jpeg')} className={`${styles.button} ${styles.btnGreen}`}>
           Download JPEG
         </button>
-        <button
-          onClick={() => handleDownload('webp')}
-          className={`${styles.button} ${styles.btnYellow}`}
-        >
+        <button onClick={() => handleDownload('webp')} className={`${styles.button} ${styles.btnYellow}`}>
           Download WEBP
         </button>
       </div>

@@ -7,6 +7,7 @@ import axiosInstance from '@/utils/axiosInstance';
 import styles from "@/visualize/visualize3d.module.css";
 import { showError, showSuccess } from '@/utils/helper';
 import CustomTooltip from '@/createtasks/CustomTooltip';
+import { API_ENDPOINTS } from '@/utils/apisPaths';
 
 const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
@@ -100,8 +101,8 @@ const Visualize3d = () => {
   useEffect(() => {
     async function fetchData() {
       try {
-        const usersRes = await axiosInstance.get('/users');
-        const tasksRes = await axiosInstance.get('/tasks');
+         const usersRes = await axiosInstance.get(API_ENDPOINTS.USERS.GET_ALL_USERS);
+        const tasksRes = await axiosInstance.get(API_ENDPOINTS.TASKS.GET_ALL_TASKS);
         setUsers(Array.isArray(usersRes.data) ? usersRes.data : []);
         setTasks(Array.isArray(tasksRes.data) ? tasksRes.data : []);
       } catch (e) {
