@@ -44,11 +44,6 @@ app.options('/{*splat}', cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// app.use(
-//   helmet({
-//     contentSecurityPolicy: process.env.NODE_ENV !== 'production'
-//   })
-// );
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
