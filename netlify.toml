@@ -1,13 +1,22 @@
 [build]
-  base    = "frontend"     # Netlify will cd into this folder
+  base    = "frontend"     # Netlify enters this directory before running the build
   command = "yarn build"
-  publish = "dist"         # Relative to base, so effective path is frontend/dist
+  publish = "dist"         # This folder is deployed
 
 [build.environment]
   NODE_VERSION     = "22"
   NETLIFY_USE_YARN = "true"
 
+# Proxy API requests to your backend, avoiding CORS
 [[redirects]]
-  from   = "/*"
-  to     = "/index.html"
-  status = 200
+  from      = "/api/*"
+  to        = "https://exceltovisualbackend.onrender.com/api/:splat"
+  status    = 200
+  force     = true
+
+# SPA fallback: serve index.html for all other routes
+[[redirects]]
+  from      = "/*"
+  to        = "/index.html"
+  status    = 200
+  force     = false
